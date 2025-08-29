@@ -11,7 +11,17 @@ const config = {
 			fallback: 'index.html',
 			precompress: false,
 			strict: false
-		})
+		}),
+		prerender: {
+			handleHttpError: ({ path, referrer, message }) => {
+				// Ignore missing favicon and other non-critical assets
+				if (path.includes('favicon') || path.includes('.ico')) {
+					return;
+				}
+				// Log other errors but don't fail the build
+				console.warn(`Prerender warning for ${path}: ${message}`);
+			}
+		}
 	}
 };
 

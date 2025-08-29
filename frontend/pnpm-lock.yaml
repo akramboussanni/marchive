@@ -22,8 +22,8 @@ importers:
         specifier: ^2.0.0
         version: 2.1.1(@sveltejs/kit@1.30.4(svelte@4.2.20)(vite@4.5.14(@types/node@24.3.0)))
       '@sveltejs/adapter-static':
-        specifier: ^3.0.0
-        version: 3.0.9(@sveltejs/kit@1.30.4(svelte@4.2.20)(vite@4.5.14(@types/node@24.3.0)))
+        specifier: ^2.0.0
+        version: 2.0.3(@sveltejs/kit@1.30.4(svelte@4.2.20)(vite@4.5.14(@types/node@24.3.0)))
       '@sveltejs/kit':
         specifier: ^1.20.4
         version: 1.30.4(svelte@4.2.20)(vite@4.5.14(@types/node@24.3.0))
@@ -242,10 +242,10 @@ packages:
     peerDependencies:
       '@sveltejs/kit': ^1.0.0
 
-  '@sveltejs/adapter-static@3.0.9':
-    resolution: {integrity: sha512-aytHXcMi7lb9ljsWUzXYQ0p5X1z9oWud2olu/EpmH7aCu4m84h7QLvb5Wp+CFirKcwoNnYvYWhyP/L8Vh1ztdw==}
+  '@sveltejs/adapter-static@2.0.3':
+    resolution: {integrity: sha512-VUqTfXsxYGugCpMqQv1U0LIdbR3S5nBkMMDmpjGVJyM6Q2jHVMFtdWJCkeHMySc6mZxJ+0eZK3T7IgmUCDrcUQ==}
     peerDependencies:
-      '@sveltejs/kit': ^2.0.0
+      '@sveltejs/kit': ^1.5.0
 
   '@sveltejs/kit@1.30.4':
     resolution: {integrity: sha512-JSQIQT6XvdchCRQEm7BABxPC56WP5RYVONAi+09S8tmzeP43fBsRlr95bFmsTQM2RHBldfgQk+jgdnsKI75daA==}
@@ -1127,7 +1127,7 @@ snapshots:
       '@sveltejs/kit': 1.30.4(svelte@4.2.20)(vite@4.5.14(@types/node@24.3.0))
       import-meta-resolve: 4.1.0
 
-  '@sveltejs/adapter-static@3.0.9(@sveltejs/kit@1.30.4(svelte@4.2.20)(vite@4.5.14(@types/node@24.3.0)))':
+  '@sveltejs/adapter-static@2.0.3(@sveltejs/kit@1.30.4(svelte@4.2.20)(vite@4.5.14(@types/node@24.3.0)))':
     dependencies:
       '@sveltejs/kit': 1.30.4(svelte@4.2.20)(vite@4.5.14(@types/node@24.3.0))
 
