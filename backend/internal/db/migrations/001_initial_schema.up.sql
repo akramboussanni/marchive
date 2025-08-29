@@ -1,5 +1,6 @@
 -- Initial database schema for marchive
 -- All tables and indexes in one migration file
+-- Compatible with both SQLite and PostgreSQL
 
 -- Users table with authentication and profile data
 CREATE TABLE users (
@@ -95,7 +96,8 @@ CREATE INDEX idx_lockouts_ip ON lockouts(ip_address);
 CREATE INDEX idx_lockouts_locked_until ON lockouts(locked_until);
 
 -- Indexes for downloadrequests
-CREATE INDEX idx_downloadrequests_user_date ON downloadrequests(user_id, DATE(created_at, 'unixepoch'));
+-- Database-agnostic date indexing - will work with both SQLite and PostgreSQL
+CREATE INDEX idx_downloadrequests_user_date ON downloadrequests(user_id, created_at);
 CREATE INDEX idx_downloadrequests_md5 ON downloadrequests(md5);
 CREATE INDEX idx_downloadrequests_user ON downloadrequests(user_id);
 

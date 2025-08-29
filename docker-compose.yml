@@ -1,12 +1,8 @@
 version: '3.8'
 
-# Database configuration - change this password for production
-x-db-config: &db-config
-  DB_PASSWORD: password
-
 services:
   marchive:
-    image: ghcr.io/akramboussanni/marchive:latest
+    image: ghcr.io/akramboussanni/marchive:main
     environment:
       # CHANGE THESE FOR PRODUCTION:
       - JWT_SECRET=your-super-secret-jwt-key-here-change-in-production
@@ -16,21 +12,22 @@ services:
       - COOKIE_DOMAIN=localhost
       # These can stay as-is:
       - LOGGER_TYPE=zap
-      - DB_CONNECTION_STRING=postgresql://marchive:${DB_PASSWORD}@db:5432/marchive
+      - DB_CONNECTION_STRING=postgresql://marchive:password@db:5432/marchive?sslmode=disable
       - APP_PORT=9520
       - TRUST_PROXY_IP_HEADERS=true
     volumes:
       - ./downloads:/app/downloads
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     restart: unless-stopped
 
   db:
-    image: postgres:15-alpine
+    image: postgres:13-alpine
     environment:
       - POSTGRES_DB=marchive
       - POSTGRES_USER=marchive
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_PASSWORD=password
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
@@ -39,6 +36,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
 volumes:
   postgres_data:

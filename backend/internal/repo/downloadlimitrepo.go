@@ -40,17 +40,19 @@ func (r *DownloadRequestRepo) CreateDownloadRequest(ctx context.Context, userID 
 }
 
 func (r *DownloadRequestRepo) GetDailyDownloadCount(ctx context.Context, userID int64) (int, error) {
-	today := time.Now().UTC().Format("2006-01-02")
+	// Convert today's date to start and end of day Unix timestamps
+	startOfDay := time.Date(time.Now().UTC().Year(), time.Now().UTC().Month(), time.Now().UTC().Day(), 0, 0, 0, 0, time.UTC).Unix()
+	endOfDay := startOfDay + 86400 // 24 hours in seconds
 
 	var count int
 	query := `
 		SELECT COUNT(*) 
 		FROM downloadrequests 
 		WHERE user_id = $1 
-		AND DATE(created_at, 'unixepoch') = $2
+		AND created_at >= $2 AND created_at < $3
 	`
 
-	err := r.db.GetContext(ctx, &count, query, userID, today)
+	err := r.db.GetContext(ctx, &count, query, userID, startOfDay, endOfDay)
 	return count, err
 }
 
@@ -146,11 +148,11 @@ func (r *DownloadRequestRepo) GetDailyDownloadStats(ctx context.Context, userID 
 	stats := make(map[string]int)
 
 	query := `
-		SELECT DATE(created_at, 'unixepoch') as download_date, COUNT(*) as count
+		SELECT (created_at / 86400) * 86400 as download_date, COUNT(*) as count
 		FROM downloadrequests 
 		WHERE user_id = $1 
 		AND created_at >= $2
-		GROUP BY DATE(created_at, 'unixepoch')
+		GROUP BY (created_at / 86400) * 86400
 		ORDER BY download_date DESC
 	`
 
@@ -163,11 +165,13 @@ func (r *DownloadRequestRepo) GetDailyDownloadStats(ctx context.Context, userID 
 	defer rows.Close()
 
 	for rows.Next() {
-		var date string
+		var timestamp int64
 		var count int
-		if err := rows.Scan(&date, &count); err != nil {
+		if err := rows.Scan(&timestamp, &count); err != nil {
 			return nil, err
 		}
+		// Convert Unix timestamp back to date string for the map key
+		date := time.Unix(timestamp, 0).UTC().Format("2006-01-02")
 		stats[date] = count
 	}
 

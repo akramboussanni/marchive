@@ -1,4 +1,5 @@
 -- Search cache table to store search results temporarily
+-- Compatible with both SQLite and PostgreSQL
 CREATE TABLE search_cache (
     id BIGINT PRIMARY KEY,
     user_id BIGINT NOT NULL,

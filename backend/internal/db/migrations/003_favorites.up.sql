@@ -1,4 +1,5 @@
 -- Add favorites table for authenticated users
+-- Compatible with both SQLite and PostgreSQL
 CREATE TABLE favorites (
     id BIGINT PRIMARY KEY,
     user_id BIGINT NOT NULL,
