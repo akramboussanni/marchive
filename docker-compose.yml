@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   marchive:
-    build: .
+    image: ghcr.io/akramboussanni/marchive:latest
     ports:
       - "9520:9520"
       - "3000:3000"

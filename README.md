@@ -40,14 +40,14 @@ Use the `docker-compose.yml` file.
 - Go 1.21+
 - Node.js 18+
 - pnpm
-- PostgreSQL 15+
+- you don't need postgres, if ran with -tags=debug it will run as sqlite db.
 
 ### Backend Setup
 
 ```bash
 cd backend
 go mod download
-go run cmd/server/main.go
+go run -tags=debug cmd/server/main.go
 ```
 
 ### Frontend Setup
@@ -56,16 +56,6 @@ go run cmd/server/main.go
 cd frontend
 pnpm install
 pnpm dev
-```
-
-### Database Setup
-
-```bash
-# Create database
-createdb marchived
-
-# Run migrations (if any)
-# go run cmd/migrate/main.go
 ```
 
 ## 📁 Project Structure
