@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akramboussanni/gocode/config"
-	"github.com/akramboussanni/gocode/internal/model"
-	"github.com/akramboussanni/gocode/internal/repo"
+	"github.com/akramboussanni/marchive/config"
+	"github.com/akramboussanni/marchive/internal/model"
+	"github.com/akramboussanni/marchive/internal/repo"
 	"github.com/google/uuid"
 )
 

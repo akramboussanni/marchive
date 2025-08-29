@@ -25,7 +25,7 @@ func Init(dsn string) {
 	log.Println("using sqlite db")
 
 	var err error
-	DB, err = sqlx.Open("sqlite", "gocode.db")
+	DB, err = sqlx.Open("sqlite", "marchive.db")
 	if err != nil {
 		log.Fatalf("cannot open database: %v", err)
 	}

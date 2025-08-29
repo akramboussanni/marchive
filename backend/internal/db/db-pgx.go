@@ -8,7 +8,7 @@ import (
 	"io/fs"
 	"log"
 
-	"github.com/akramboussanni/gocode/internal/applog"
+	"github.com/akramboussanni/marchive/internal/applog"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/golang-migrate/migrate/v4/source/iofs"

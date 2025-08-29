@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/akramboussanni/gocode/internal/anna"
-	"github.com/akramboussanni/gocode/internal/model"
-	"github.com/akramboussanni/gocode/internal/repo"
+	"github.com/akramboussanni/marchive/internal/anna"
+	"github.com/akramboussanni/marchive/internal/model"
+	"github.com/akramboussanni/marchive/internal/repo"
 )
 
 type DownloadService struct {

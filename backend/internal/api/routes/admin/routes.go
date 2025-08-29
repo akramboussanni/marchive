@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/akramboussanni/gocode/internal/middleware"
-	"github.com/akramboussanni/gocode/internal/repo"
+	"github.com/akramboussanni/marchive/internal/middleware"
+	"github.com/akramboussanni/marchive/internal/repo"
 	"github.com/go-chi/chi/v5"
 )
 

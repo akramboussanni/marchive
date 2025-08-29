@@ -3,7 +3,7 @@ package config
 import (
 	"encoding/base64"
 
-	"github.com/akramboussanni/gocode/internal/applog"
+	"github.com/akramboussanni/marchive/internal/applog"
 	"github.com/joho/godotenv"
 )
 

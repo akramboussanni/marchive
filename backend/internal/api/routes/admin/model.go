@@ -1,6 +1,6 @@
 package admin
 
-import "github.com/akramboussanni/gocode/internal/model"
+import "github.com/akramboussanni/marchive/internal/model"
 
 type UserListResponse struct {
 	Users      []UserWithStats `json:"users"`

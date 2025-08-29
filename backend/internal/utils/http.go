@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/akramboussanni/gocode/config"
+	"github.com/akramboussanni/marchive/config"
 )
 
 func GetClientIP(r *http.Request) string {

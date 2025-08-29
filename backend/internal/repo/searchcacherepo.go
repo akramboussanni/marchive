@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/akramboussanni/gocode/internal/anna"
-	"github.com/akramboussanni/gocode/internal/model"
-	"github.com/akramboussanni/gocode/internal/utils"
+	"github.com/akramboussanni/marchive/internal/anna"
+	"github.com/akramboussanni/marchive/internal/model"
+	"github.com/akramboussanni/marchive/internal/utils"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -144,5 +144,3 @@ func (r *SearchCacheRepo) DeleteUserOldestCache(ctx context.Context, userID int6
 	_, err := r.db.ExecContext(ctx, query, userID)
 	return err
 }
-
-

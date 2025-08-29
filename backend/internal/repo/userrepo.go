@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/akramboussanni/gocode/internal/model"
+	"github.com/akramboussanni/marchive/internal/model"
 	"github.com/jmoiron/sqlx"
 )
 

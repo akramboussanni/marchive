@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/akramboussanni/gocode/config"
-	"github.com/akramboussanni/gocode/internal/model"
+	"github.com/akramboussanni/marchive/config"
+	"github.com/akramboussanni/marchive/internal/model"
 	"github.com/jmoiron/sqlx"
 )
 

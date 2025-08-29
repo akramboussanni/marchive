@@ -4,12 +4,12 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/akramboussanni/gocode/config"
-	"github.com/akramboussanni/gocode/internal/api"
-	"github.com/akramboussanni/gocode/internal/jwt"
-	"github.com/akramboussanni/gocode/internal/model"
-	"github.com/akramboussanni/gocode/internal/repo"
-	"github.com/akramboussanni/gocode/internal/utils"
+	"github.com/akramboussanni/marchive/config"
+	"github.com/akramboussanni/marchive/internal/api"
+	"github.com/akramboussanni/marchive/internal/jwt"
+	"github.com/akramboussanni/marchive/internal/model"
+	"github.com/akramboussanni/marchive/internal/repo"
+	"github.com/akramboussanni/marchive/internal/utils"
 	"github.com/go-chi/chi/v5"
 )
 

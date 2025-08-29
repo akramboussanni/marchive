@@ -1,6 +1,6 @@
 package model
 
-import "github.com/akramboussanni/gocode/internal/anna"
+import "github.com/akramboussanni/marchive/internal/anna"
 
 // SearchCache represents a cached search result
 type SearchCache struct {
@@ -37,5 +37,3 @@ type Pagination struct {
 	Total   int  `json:"total"`
 	HasNext bool `json:"has_next"`
 }
-
-

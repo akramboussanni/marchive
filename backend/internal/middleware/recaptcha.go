@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/akramboussanni/gocode/config"
-	"github.com/akramboussanni/gocode/internal/api"
-	"github.com/akramboussanni/gocode/internal/model"
-	"github.com/akramboussanni/gocode/internal/utils"
+	"github.com/akramboussanni/marchive/config"
+	"github.com/akramboussanni/marchive/internal/api"
+	"github.com/akramboussanni/marchive/internal/model"
+	"github.com/akramboussanni/marchive/internal/utils"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/go-querystring/query"
 )

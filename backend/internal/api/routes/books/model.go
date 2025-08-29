@@ -1,6 +1,6 @@
 package books
 
-import "github.com/akramboussanni/gocode/internal/anna"
+import "github.com/akramboussanni/marchive/internal/anna"
 
 type SearchRequest struct {
 	Query  string `json:"query" binding:"required" example:"programming golang"`

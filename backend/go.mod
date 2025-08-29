@@ -1,4 +1,4 @@
-module github.com/akramboussanni/gocode
+module github.com/akramboussanni/marchive
 
 go 1.24.4
 

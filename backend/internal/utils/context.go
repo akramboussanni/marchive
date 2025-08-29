@@ -3,7 +3,7 @@ package utils
 import (
 	"context"
 
-	"github.com/akramboussanni/gocode/internal/model"
+	"github.com/akramboussanni/marchive/internal/model"
 )
 
 type contextKey string

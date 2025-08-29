@@ -1,14 +1,14 @@
-// @title gocode API
+// @title marchive API
 // @version 1.0.0
 // @description A secure, fast, and feature-rich Go-Chi backend with JWT authentication, email verification, and password management. Built with modern Go practices and comprehensive security features.
-// @termsOfService https://github.com/akramboussanni/gocode/blob/main/LICENSE
+// @termsOfService https://github.com/akramboussanni/marchive/blob/main/LICENSE
 
 // @contact.name API Support
-// @contact.url https://github.com/akramboussanni/gocode/issues
+// @contact.url https://github.com/akramboussanni/marchive/issues
 // @contact.email support@example.com
 
 // @license.name MIT License
-// @license.url https://github.com/akramboussanni/gocode/blob/main/LICENSE
+// @license.url https://github.com/akramboussanni/marchive/blob/main/LICENSE
 
 // @host localhost:9520
 // @BasePath /
@@ -51,13 +51,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/akramboussanni/gocode/config"
-	"github.com/akramboussanni/gocode/internal/api/routes"
-	"github.com/akramboussanni/gocode/internal/db"
-	"github.com/akramboussanni/gocode/internal/model"
-	"github.com/akramboussanni/gocode/internal/repo"
-	"github.com/akramboussanni/gocode/internal/services"
-	"github.com/akramboussanni/gocode/internal/utils"
+	"github.com/akramboussanni/marchive/config"
+	"github.com/akramboussanni/marchive/internal/api/routes"
+	"github.com/akramboussanni/marchive/internal/db"
+	"github.com/akramboussanni/marchive/internal/model"
+	"github.com/akramboussanni/marchive/internal/repo"
+	"github.com/akramboussanni/marchive/internal/services"
+	"github.com/akramboussanni/marchive/internal/utils"
 )
 
 func createDefaultAdmin(repos *repo.Repos) {

@@ -3,9 +3,9 @@ package auth
 import (
 	"net/http"
 
-	"github.com/akramboussanni/gocode/internal/api"
-	"github.com/akramboussanni/gocode/internal/applog"
-	"github.com/akramboussanni/gocode/internal/utils"
+	"github.com/akramboussanni/marchive/internal/api"
+	"github.com/akramboussanni/marchive/internal/applog"
+	"github.com/akramboussanni/marchive/internal/utils"
 )
 
 // @Summary Get current user profile

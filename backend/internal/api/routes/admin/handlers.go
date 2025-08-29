@@ -5,10 +5,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/akramboussanni/gocode/internal/api"
-	"github.com/akramboussanni/gocode/internal/applog"
-	"github.com/akramboussanni/gocode/internal/model"
-	"github.com/akramboussanni/gocode/internal/utils"
+	"github.com/akramboussanni/marchive/internal/api"
+	"github.com/akramboussanni/marchive/internal/applog"
+	"github.com/akramboussanni/marchive/internal/model"
+	"github.com/akramboussanni/marchive/internal/utils"
 	"github.com/go-chi/chi/v5"
 )
 

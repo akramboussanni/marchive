@@ -20,8 +20,7 @@ services:
       - APP_PORT=9520
       - TRUST_PROXY_IP_HEADERS=true
     volumes:
-      - ./data:/app/data
-      - ./uploads:/app/uploads
+      - ./downloads:/app/downloads
     depends_on:
       - db
     restart: unless-stopped

@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/akramboussanni/gocode/config"
+	"github.com/akramboussanni/marchive/config"
 )
 
 func SecurityHeaders(next http.Handler) http.Handler {

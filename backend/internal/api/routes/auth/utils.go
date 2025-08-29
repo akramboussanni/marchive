@@ -1,8 +1,8 @@
 package auth
 
 import (
-	"github.com/akramboussanni/gocode/internal/jwt"
-	"github.com/akramboussanni/gocode/internal/model"
+	"github.com/akramboussanni/marchive/internal/jwt"
+	"github.com/akramboussanni/marchive/internal/model"
 )
 
 func GenerateLogin(jwtToken jwt.Jwt) model.LoginTokens {
