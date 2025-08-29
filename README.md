@@ -11,7 +11,7 @@ Book library with over 100M+ books using Anna's Archive.
 
 ## Screenshots
 
-![Marchived Dashboard](https://via.placeholder.com/1200x800/1f2937/ffffff?text=Marchived+Dashboard)
+![Marchived Dashboard](static/dashboard.png)
 
 *The main dashboard*
 
