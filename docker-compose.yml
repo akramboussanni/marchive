@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  marchive:
+    build: .
+    ports:
+      - "9520:9520"
+      - "3000:3000"
+    environment:
+      - JWT_SECRET=your-super-secret-jwt-key-here-change-in-production
+      - ANNAS_API_KEY=your-annas-api-key-here
+      - LOGGER_TYPE=zap
+      - FRONTEND_CORS=http://localhost:3000
+      - DB_CONNECTION_STRING=postgresql://marchive:password@db:5432/marchive
+      - APP_PORT=9520
+      - COOKIE_DOMAIN=localhost
+      - TRUST_PROXY_IP_HEADERS=false
+    volumes:
+      - ./data:/app/data
+      - ./uploads:/app/uploads
+    depends_on:
+      - db
+    restart: unless-stopped
+
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=marchive
+      - POSTGRES_USER=marchive
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U marchive -d marchive"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+    driver: local
