@@ -15,3 +15,4 @@ CREATE INDEX idx_search_cache_user_id ON search_cache(user_id);
 CREATE INDEX idx_search_cache_expires_at ON search_cache(expires_at);
 CREATE INDEX idx_search_cache_created_at ON search_cache(created_at);
 
+

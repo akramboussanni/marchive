@@ -145,3 +145,4 @@ func (r *SearchCacheRepo) DeleteUserOldestCache(ctx context.Context, userID int6
 	return err
 }
 
+
