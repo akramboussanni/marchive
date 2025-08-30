@@ -2,9 +2,10 @@ version: '3.8'
 
 services:
   marchive:
-    build: .
+    image: ghcr.io/akramboussanni/marchive:main
     networks:
       - marchive-network
+    command: ["sh", "-c", "cd /app/frontend && pnpm start & cd /app/backend && ./main; wait"]
     environment:
       # CHANGE THESE FOR PRODUCTION:
       - JWT_SECRET=your-super-secret-jwt-key-here-change-in-production
@@ -21,7 +22,7 @@ services:
       - "9520:9520"  # Backend API
       - "5173:5173"  # Frontend dev server
     volumes:
-      - ./downloads:/app/downloads
+      - ./downloads:/app/backend/downloads
     depends_on:
       db:
         condition: service_healthy
