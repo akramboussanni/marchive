@@ -73,10 +73,8 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:9520/ || exit 1
 
 # Create a startup script to run both services
-RUN echo '#!/bin/sh\n\
-cd /app/frontend && pnpm start &\n\
-cd /app/backend && ./main\n\
-wait' > /app/start.sh && chmod +x /app/start.sh
+RUN printf '#!/bin/sh\ncd /app/frontend && pnpm start &\ncd /app/backend && ./main\nwait\n' > /app/start.sh && chmod +x /app/start.sh
+
 
 # Run the startup script
 CMD ["/app/start.sh"]
