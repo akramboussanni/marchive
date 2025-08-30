@@ -1,6 +1,9 @@
 package books
 
-import "github.com/akramboussanni/marchive/internal/anna"
+import (
+	"github.com/akramboussanni/marchive/internal/anna"
+	"github.com/akramboussanni/marchive/internal/model"
+)
 
 type SearchRequest struct {
 	Query  string `json:"query" binding:"required" example:"programming golang"`
@@ -81,4 +84,9 @@ type ToggleFavoriteResponse struct {
 type FavoritesResponse struct {
 	Books      []BookWithStats `json:"books"`
 	Pagination Pagination      `json:"pagination"`
+}
+
+type DownloadsResponse struct {
+	Jobs       []model.DownloadJobWithMetadata `json:"jobs"`
+	Pagination Pagination                      `json:"pagination"`
 }

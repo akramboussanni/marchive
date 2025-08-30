@@ -107,3 +107,10 @@ func (r *DownloadJobRepo) GetJobByUserAndBook(ctx context.Context, userID int64,
 	err := r.db.GetContext(ctx, &job, query, userID, bookHash)
 	return &job, err
 }
+
+func (r *DownloadJobRepo) CountUserJobs(ctx context.Context, userID int64) (int, error) {
+	var count int
+	query := `SELECT COUNT(*) FROM downloadjobs WHERE user_id = $1`
+	err := r.db.QueryRowContext(ctx, query, userID).Scan(&count)
+	return count, err
+}

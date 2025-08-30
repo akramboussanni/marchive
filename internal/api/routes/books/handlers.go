@@ -395,7 +395,30 @@ func (br *BookRouter) HandleUserDownloads(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	api.WriteJSON(w, http.StatusOK, api.EmptyIfNil(jobs))
+	// Get total count for pagination
+	total, err := br.DownloadJobRepo.CountUserJobs(r.Context(), user.ID)
+	if err != nil {
+		applog.Error("Failed to count user jobs:", err)
+		api.WriteInternalError(w)
+		return
+	}
+
+	// Prevent caching to avoid 304 responses
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	w.Header().Set("Pragma", "no-cache")
+	w.Header().Set("Expires", "0")
+
+	response := DownloadsResponse{
+		Jobs: api.EmptyIfNil(jobs),
+		Pagination: Pagination{
+			Limit:   limit,
+			Offset:  offset,
+			Total:   total,
+			HasNext: offset+limit < total,
+		},
+	}
+
+	api.WriteJSON(w, http.StatusOK, response)
 }
 
 func (br *BookRouter) HandleToggleFavorite(w http.ResponseWriter, r *http.Request) {

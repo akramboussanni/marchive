@@ -140,9 +140,9 @@ export const books = {
 		return api.handleResponse<DownloadJob>(response);
 	},
 
-	async getUserDownloads(limit = 20, offset = 0): Promise<DownloadJob[]> {
+	async getUserDownloads(limit = 20, offset = 0): Promise<{ jobs: DownloadJob[]; pagination: { limit: number; offset: number; total: number; has_next: boolean } }> {
 		const response = await api.get(`/books/downloads?limit=${limit}&offset=${offset}`);
-		return api.handleResponse<DownloadJob[]>(response);
+		return api.handleResponse<{ jobs: DownloadJob[]; pagination: { limit: number; offset: number; total: number; has_next: boolean } }>(response);
 	},
 
 	getDownloadUrl(hash: string): string {
