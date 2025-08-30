@@ -140,5 +140,5 @@ func (ar *AdminRouter) HandleGiveEveryoneInvite(w http.ResponseWriter, r *http.R
 // RedemptionCodeListResponse represents the response for listing redemption codes
 type RedemptionCodeListResponse struct {
 	Codes      []*model.RedemptionCode `json:"codes"`
-	Pagination Pagination               `json:"pagination"`
+	Pagination Pagination              `json:"pagination"`
 }

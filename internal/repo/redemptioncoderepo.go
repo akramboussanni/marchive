@@ -26,7 +26,7 @@ func NewRedemptionCodeRepo(db *sqlx.DB) *RedemptionCodeRepo {
 // CreateRedemptionCode creates a new redemption code
 func (r *RedemptionCodeRepo) CreateRedemptionCode(ctx context.Context, req *model.CreateRedemptionCodeRequest, createdBy int64) (*model.RedemptionCode, error) {
 	now := time.Now().Unix()
-	
+
 	code := &model.RedemptionCode{
 		ID:             utils.GenerateSnowflakeID(),
 		Code:           req.Code,
@@ -71,13 +71,13 @@ func (r *RedemptionCodeRepo) GetRedemptionCodeByCode(ctx context.Context, codeSt
 // IsCodeRedeemedByUser checks if a user has already redeemed a specific code
 func (r *RedemptionCodeRepo) IsCodeRedeemedByUser(ctx context.Context, codeID, userID int64) (bool, error) {
 	query := `SELECT COUNT(*) FROM redemption_log WHERE code_id = $1 AND user_id = $2`
-	
+
 	var count int
 	err := r.db.GetContext(ctx, &count, query, codeID, userID)
 	if err != nil {
 		return false, fmt.Errorf("failed to check if code was redeemed: %w", err)
 	}
-	
+
 	return count > 0, nil
 }
 
@@ -102,7 +102,7 @@ func (r *RedemptionCodeRepo) RedeemCode(ctx context.Context, codeID, userID int6
 		r.LogColumns.AllRaw,
 		r.LogColumns.AllPrefixed,
 	)
-	
+
 	logEntry := &model.RedemptionLog{
 		ID:                    utils.GenerateSnowflakeID(),
 		CodeID:                codeID,
@@ -111,7 +111,7 @@ func (r *RedemptionCodeRepo) RedeemCode(ctx context.Context, codeID, userID int6
 		InviteTokensGranted:   inviteTokens,
 		RequestCreditsGranted: requestCredits,
 	}
-	
+
 	_, err = tx.NamedExecContext(ctx, logQuery, logEntry)
 	if err != nil {
 		return fmt.Errorf("failed to log redemption: %w", err)
@@ -157,26 +157,26 @@ func (r *RedemptionCodeRepo) ListRedemptionCodes(ctx context.Context, limit, off
 // CountRedemptionCodes returns the total number of redemption codes
 func (r *RedemptionCodeRepo) CountRedemptionCodes(ctx context.Context) (int, error) {
 	query := `SELECT COUNT(*) FROM redemption_codes`
-	
+
 	var count int
 	err := r.db.GetContext(ctx, &count, query)
 	if err != nil {
 		return 0, fmt.Errorf("failed to count redemption codes: %w", err)
 	}
-	
+
 	return count, nil
 }
 
 // RevokeRedemptionCode marks a code as revoked
 func (r *RedemptionCodeRepo) RevokeRedemptionCode(ctx context.Context, codeID int64) error {
 	now := time.Now().Unix()
-	
+
 	query := `UPDATE redemption_codes SET revoked_at = $1 WHERE id = $2`
 	_, err := r.db.ExecContext(ctx, query, now, codeID)
 	if err != nil {
 		return fmt.Errorf("failed to revoke redemption code: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -187,6 +187,6 @@ func (r *RedemptionCodeRepo) DeleteRedemptionCode(ctx context.Context, codeID in
 	if err != nil {
 		return fmt.Errorf("failed to delete redemption code: %w", err)
 	}
-	
+
 	return nil
 }
