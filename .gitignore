@@ -99,5 +99,5 @@ docs/
 run.py
 
 # Downloads and user data
-downloads/
+/downloads/
 backend/downloads/
