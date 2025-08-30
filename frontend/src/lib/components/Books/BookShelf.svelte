@@ -117,32 +117,7 @@
 </script>
 
 <div class="space-y-6">
-	<!-- Authentication Notice for Non-Authenticated Users -->
-	{#if !$isAuthenticated}
-		<div class="bg-amber-500/10 border border-amber-500/20 rounded-lg p-6">
-			<div class="flex items-start space-x-3">
-				<div class="flex-shrink-0">
-					<svg class="h-6 w-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-					</svg>
-				</div>
-				<div class="flex-1">
-					<h3 class="text-lg font-medium text-amber-400 mb-2">Search Feature Requires Authentication</h3>
-					<p class="text-amber-300/80 mb-3">
-						The search functionality is only available to authenticated users. This is because you cannot download books without an account, making search results useless for non-authenticated users.
-					</p>
-					<div class="flex space-x-3">
-						<a href="/login" class="btn-primary">
-							Sign In to Search
-						</a>
-						<a href="/profile" class="btn-secondary">
-							Create Account
-						</a>
-					</div>
-				</div>
-			</div>
-		</div>
-	{/if}
+
 
 	<!-- Favorites Section -->
 	{#if $isAuthenticated || localFavoritesCount > 0}
@@ -293,26 +268,12 @@
 			<div class="text-6xl mb-4">📚</div>
 			<h3 class="text-lg font-medium text-gray-300 mb-2">No books available yet</h3>
 			<p class="text-gray-500 mb-6">Books will appear here as users download and share them with the community</p>
-			{#if $isAuthenticated}
-				<button
-					on:click={() => document.getElementById('search-input')?.focus()}
-					class="btn-primary"
-				>
-					Search for Books
-				</button>
-			{:else}
-				<div class="space-y-3">
-					<p class="text-sm text-gray-400">Search requires authentication</p>
-					<div class="flex justify-center space-x-3">
-						<a href="/login" class="btn-primary">
-							Sign In to Search
-						</a>
-						<a href="/profile" class="btn-secondary">
-							Create Account
-						</a>
-					</div>
-				</div>
-			{/if}
+			<button
+				on:click={() => document.getElementById('search-input')?.focus()}
+				class="btn-primary"
+			>
+				Search for Books
+			</button>
 		</div>
 	{/if}
 </div>
