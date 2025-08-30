@@ -15,6 +15,7 @@ services:
       - DB_CONNECTION_STRING=postgresql://marchive:password@db:5432/marchive?sslmode=disable
       - APP_PORT=9520
       - TRUST_PROXY_IP_HEADERS=false
+      - DOWNLOAD_DIR=/app/downloads
     ports:
       - "9520:9520"
     volumes:

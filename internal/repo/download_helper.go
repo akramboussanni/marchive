@@ -59,6 +59,37 @@ func (h *DownloadRequestHelper) GetUserDownloadHistory(ctx context.Context, user
 	return h.repos.DownloadRequest.GetUserDownloadHistory(ctx, userID, limit, offset)
 }
 
+func (h *DownloadRequestHelper) CanDownloadBook(ctx context.Context, userID int64, bookHash string) (bool, error) {
+	// Check if user has a valid download job for this book
+	job, err := h.repos.DownloadJob.GetJobByUserAndBook(ctx, userID, bookHash)
+	if err != nil {
+		return false, err
+	}
+
+	// Check if job is completed
+	if job.Status != model.DownloadStatusCompleted {
+		return false, nil
+	}
+
+	// Check daily download limit
+	canDownload, err := h.repos.DownloadRequest.CheckAndCreateDownload(ctx, userID, bookHash, "")
+	if err != nil {
+		return false, err
+	}
+
+	return canDownload, nil
+}
+
+func (h *DownloadRequestHelper) GetBookDownloadStatus(ctx context.Context, userID int64, bookHash string) (*model.DownloadJob, error) {
+	// Get the download job for this user and book
+	job, err := h.repos.DownloadJob.GetJobByUserAndBook(ctx, userID, bookHash)
+	if err != nil {
+		return nil, err
+	}
+
+	return job, nil
+}
+
 func (h *DownloadRequestHelper) GetDownloadsByMD5(ctx context.Context, md5 string) ([]model.DownloadRequest, error) {
 	return h.repos.DownloadRequest.GetDownloadsByMD5(ctx, md5)
 }

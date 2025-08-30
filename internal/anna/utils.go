@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -36,9 +35,6 @@ func extractMetaInformation(meta string) (language, format, size string) {
 			size = trimmed
 		}
 	}
-
-	log.Printf("extractMetaInformation: input='%s' -> language='%s', format='%s', size='%s'",
-		meta, language, format, size)
 
 	return language, format, size
 }
@@ -108,8 +104,6 @@ func min(a, b int) int {
 }
 
 func GetBookMetadata(hash string) (*Book, error) {
-	log.Printf("Fetching metadata for book hash: %s", hash)
-
 	books, err := FindBook(hash)
 	if err != nil {
 		return nil, fmt.Errorf("failed to search for book metadata: %w", err)
@@ -117,7 +111,6 @@ func GetBookMetadata(hash string) (*Book, error) {
 
 	for _, book := range books {
 		if book.Hash == hash {
-			log.Printf("Found metadata for hash %s: %s", hash, book.Title)
 			return book, nil
 		}
 	}

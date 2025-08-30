@@ -46,10 +46,10 @@ func (r *SearchCacheRepo) StoreSearchResults(ctx context.Context, userID int64, 
 		ExpiresAt:    expiresAt,
 	}
 
-	query_sql := fmt.Sprintf(`
+	query_sql := `
 		INSERT INTO search_cache (id, user_id, query, results, total_results, created_at, expires_at) 
 		VALUES (:id, :user_id, :query, :results, :total_results, :created_at, :expires_at)
-	`)
+	`
 
 	_, err = r.db.NamedExecContext(ctx, query_sql, searchCache)
 	if err != nil {

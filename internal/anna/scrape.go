@@ -2,7 +2,6 @@ package anna
 
 import (
 	"fmt"
-	"log"
 	"net/url"
 	"sync"
 
@@ -29,7 +28,6 @@ func FindBook(query string) ([]*Book, error) {
 		mu.Lock()
 		bookList = append(bookList, e)
 		mu.Unlock()
-		log.Println("Found book link:", e.Attr("href"))
 	})
 
 	c.OnHTML("a[href*='/md5/']", func(e *colly.HTMLElement) {
@@ -44,29 +42,22 @@ func FindBook(query string) ([]*Book, error) {
 		}
 		if !alreadyFound {
 			bookList = append(bookList, e)
-			log.Println("Found book link (fallback):", e.Attr("href"))
 		}
 		mu.Unlock()
 	})
 
 	c.OnRequest(func(r *colly.Request) {
-		log.Println("Visiting URL: ", r.URL.String())
 	})
 
 	fullURL := fmt.Sprintf(AnnasSearchEndpoint, url.QueryEscape(query))
 	c.Visit(fullURL)
 	c.Wait()
 
-	log.Printf("Found %d book elements", len(bookList))
-
 	bookListParsed := make([]*Book, 0, len(bookList))
 
-	for i, e := range bookList {
-		log.Printf("Parsing element %d: %s", i, e.Attr("href"))
-
+	for _, e := range bookList {
 		container := e.DOM.Closest("div.flex")
 		if container.Length() == 0 {
-			log.Printf("Could not find container for book %d", i)
 			continue
 		}
 
@@ -102,7 +93,6 @@ func FindBook(query string) ([]*Book, error) {
 
 				if len(cleanText) > 10 && strings.Contains(cleanText, "·") {
 					meta = cleanText
-					log.Printf("Found metadata: '%s'", meta)
 				}
 			}
 		})
@@ -206,12 +196,8 @@ func FindBook(query string) ([]*Book, error) {
 			CoverData: coverData,
 		}
 
-		log.Printf("Parsed book %d: Title='%s', Author='%s', Format='%s', Size='%s', CoverURL='%s', Meta='%s'",
-			i, book.Title, book.Authors, book.Format, book.Size, book.CoverURL, meta)
-
 		bookListParsed = append(bookListParsed, book)
 	}
 
-	log.Printf("Total books parsed: %d", len(bookListParsed))
 	return bookListParsed, nil
 }

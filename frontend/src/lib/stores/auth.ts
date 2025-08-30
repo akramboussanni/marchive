@@ -51,7 +51,14 @@ export const auth = {
 				isAuthenticated.set(true);
 				isAdmin.set(userData.role === 'admin');
 			} else if (response.status === 401) {
-				// Unauthorized - clear auth state but don't show error on first check
+				// Unauthorized - try to refresh the token first
+				const refreshSuccess = await this.checkAuthWithRefresh();
+				if (refreshSuccess) {
+					// Token refreshed successfully, we're now authenticated
+					return;
+				}
+				
+				// Refresh failed - clear auth state
 				user.set(null);
 				isAuthenticated.set(false);
 				isAdmin.set(false);
@@ -87,6 +94,57 @@ export const auth = {
 		}
 	},
 
+	async checkAuthWithRefresh(): Promise<boolean> {
+		try {
+			const response = await api.get('/auth/me');
+			if (response.ok) {
+				const userData = await response.json();
+				user.set(userData);
+				isAuthenticated.set(true);
+				isAdmin.set(userData.role === 'admin');
+				return true;
+			} else if (response.status === 401) {
+				// Try to refresh the token
+				const refreshResponse = await api.post('/auth/refresh', {});
+				if (refreshResponse.ok) {
+					// Token refreshed, try /me again
+					const retryResponse = await api.get('/auth/me');
+					if (retryResponse.ok) {
+						const userData = await retryResponse.json();
+						user.set(userData);
+						isAuthenticated.set(true);
+						isAdmin.set(userData.role === 'admin');
+						return true;
+					} else if (retryResponse.status === 401) {
+						// Still unauthorized after refresh - clear auth state
+						user.set(null);
+						isAuthenticated.set(false);
+						isAdmin.set(false);
+						return false;
+					}
+				}
+				
+				// Refresh failed or /me still fails after refresh
+				user.set(null);
+				isAuthenticated.set(false);
+				isAdmin.set(false);
+				return false;
+			}
+			
+			// Other errors
+			user.set(null);
+			isAuthenticated.set(false);
+			isAdmin.set(false);
+			return false;
+		} catch (error) {
+			console.error('Auth check with refresh error:', error);
+			user.set(null);
+			isAuthenticated.set(false);
+			isAdmin.set(false);
+			return false;
+		}
+	},
+
 	async changePassword(currentPassword: string, newPassword: string): Promise<boolean> {
 		try {
 			const response = await api.post('/auth/change-password', {
@@ -111,5 +169,39 @@ export const auth = {
 			isAdmin.set(false);
 			goto('/login');
 		}
+	},
+
+	async makeAuthenticatedRequest<T>(
+		requestFn: () => Promise<T>,
+		onAuthFailure?: () => void
+	): Promise<T | null> {
+		try {
+			return await requestFn();
+		} catch (error: any) {
+			if (error?.status === 401) {
+				// Try to refresh the token
+				const refreshSuccess = await this.checkAuthWithRefresh();
+				if (refreshSuccess) {
+					// Retry the request
+					try {
+						return await requestFn();
+					} catch (retryError) {
+						console.error('Request failed after token refresh:', retryError);
+						return null;
+					}
+				} else {
+					// Refresh failed, call the failure handler
+					onAuthFailure?.();
+					return null;
+				}
+			}
+			throw error;
+		}
+	},
+
+	async handleUnauthorized(): Promise<boolean> {
+		// This method can be called when any API request returns 401
+		// It will attempt to refresh the token and return true if successful
+		return await this.checkAuthWithRefresh();
 	}
 };

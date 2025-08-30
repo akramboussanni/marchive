@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount } from 'svelte';
-	import { Search, X, Download, Loader2, ChevronLeft, ChevronRight, Lock } from 'lucide-svelte';
+	import { Search, X, Download, Loader2, ChevronLeft, ChevronRight, Lock, CheckCircle } from 'lucide-svelte';
 	import { books, isSearching, type Book, type SearchResponse } from '$lib/stores/books';
 	import { isAuthenticated } from '$lib/stores/auth';
 	import { showError, showSuccess } from '$lib/stores/notifications';
@@ -81,6 +81,12 @@
 			return;
 		}
 
+		// Check if book is already available
+		if (book.status === 'available') {
+			showSuccess('Book Already Available', `"${book.title}" is already available in your downloads!`);
+			return;
+		}
+
 		downloadingBooks.add(book.hash);
 		downloadingBooks = downloadingBooks;
 
@@ -92,6 +98,10 @@
 				await books.requestDownload(book.hash, book.title);
 			}
 			showSuccess('Download Started', `"${book.title}" has been added to your downloads. Check your downloads page for progress.`);
+			
+			// Refresh the explore page to update availability status
+			// Dispatch an event to notify the parent component to refresh
+			dispatch('downloadRequested', { bookHash: book.hash });
 		} catch (error) {
 			console.error('Download failed:', error);
 			const errorMessage = (error as Error).message || 'Unknown error';
@@ -195,19 +205,29 @@
 
 									<!-- Download Button -->
 									<div class="mt-3">
-										<button
-											on:click={() => handleDownload(book, globalIndex)}
-											disabled={downloadingBooks.has(book.hash)}
-											class="btn-primary text-xs px-3 py-1 flex items-center space-x-1"
-										>
-											{#if downloadingBooks.has(book.hash)}
-												<Loader2 class="h-3 w-3 animate-spin" />
-												<span>Downloading...</span>
-											{:else}
-												<Download class="h-3 w-3" />
-												<span>Download</span>
-											{/if}
-										</button>
+										{#if book.status === 'available'}
+											<button
+												disabled
+												class="btn-secondary text-xs px-3 py-1 flex items-center space-x-1 opacity-75 cursor-not-allowed"
+											>
+												<CheckCircle class="h-3 w-3 text-green-400" />
+												<span>Already Available</span>
+											</button>
+										{:else}
+											<button
+												on:click={() => handleDownload(book, globalIndex)}
+												disabled={downloadingBooks.has(book.hash)}
+												class="btn-primary text-xs px-3 py-1 flex items-center space-x-1"
+											>
+												{#if downloadingBooks.has(book.hash)}
+													<Loader2 class="h-3 w-3 animate-spin" />
+													<span>Downloading...</span>
+												{:else}
+													<Download class="h-3 w-3" />
+													<span>Download</span>
+												{/if}
+											</button>
+										{/if}
 									</div>
 								</div>
 							</div>
@@ -283,6 +303,24 @@
 		background-color: rgb(55 65 81);
 	}
 	.btn-secondary-sm:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.btn-secondary {
+		background-color: rgb(31 41 55);
+		color: rgb(209 213 219);
+		border: 1px solid rgb(75 85 99);
+		font-weight: 500;
+		padding: 0.5rem 1rem;
+		border-radius: 0.5rem;
+		transition: background-color 0.15s ease-in-out;
+		cursor: pointer;
+	}
+	.btn-secondary:hover {
+		background-color: rgb(55 65 81);
+	}
+	.btn-secondary:disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
 	}

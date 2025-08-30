@@ -1,7 +1,10 @@
 package books
 
 import (
+	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -130,8 +133,41 @@ func (br *BookRouter) HandleSearch(w http.ResponseWriter, r *http.Request) {
 		books = books[start:end]
 	}
 
+	// Check which books are already available in the database
+	availableBooks := make(map[string]bool)
+	if len(books) > 0 {
+		hashes := make([]string, len(books))
+		for i, book := range books {
+			hashes[i] = book.Hash
+		}
+
+		// Get availability status for all books in this page
+		availableStatuses, err := br.BookRepo.GetBooksAvailabilityByHashes(r.Context(), hashes)
+		if err != nil {
+			applog.Error("Failed to check books availability:", err)
+			// Continue without availability info - not a critical error
+		} else {
+			for _, status := range availableStatuses {
+				availableBooks[status.Hash] = status.Status == model.BookStatusReady && status.FilePath != ""
+			}
+		}
+	}
+
+	// Convert anna.Book to BookWithStatus with availability info
+	booksWithStatus := make([]*BookWithStatus, len(books))
+	for i, book := range books {
+		status := "not_available"
+		if availableBooks[book.Hash] {
+			status = "available"
+		}
+		booksWithStatus[i] = &BookWithStatus{
+			Book:   book,
+			Status: status,
+		}
+	}
+
 	response := SearchResponse{
-		Books: api.EmptyIfNil(books),
+		Books: booksWithStatus,
 		Total: total,
 		Query: req.Query,
 		Pagination: Pagination{
@@ -349,8 +385,10 @@ func (br *BookRouter) HandleDownloadFile(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	// Get book information
 	book, err := br.BookRepo.GetBookByHash(r.Context(), hash)
 	if err != nil {
+		applog.Error("Failed to get book:", err)
 		api.WriteMessage(w, http.StatusNotFound, "error", "book not found")
 		return
 	}
@@ -360,6 +398,22 @@ func (br *BookRouter) HandleDownloadFile(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	// Check if file actually exists on disk
+	if _, err := os.Stat(book.FilePath); os.IsNotExist(err) {
+		applog.Error("Book file not found on disk:", book.FilePath)
+		api.WriteMessage(w, http.StatusNotFound, "error", "book file not available")
+		return
+	}
+
+	// Set proper headers for file download
+	filename := filepath.Base(book.FilePath)
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
+	w.Header().Set("Content-Type", "application/octet-stream")
+
+	// Log the download for analytics
+	applog.Info("User download", "book_hash", hash, "filename", filename)
+
+	// Serve the file
 	http.ServeFile(w, r, book.FilePath)
 }
 

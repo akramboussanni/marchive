@@ -3,6 +3,7 @@ package repo
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/akramboussanni/marchive/internal/anna"
@@ -150,4 +151,55 @@ func (r *BookRepo) GetBooksWithDownloadCount(ctx context.Context, limit, offset 
 	}
 
 	return books, nil
+}
+
+func (r *BookRepo) GetBooksAvailabilityByHashes(ctx context.Context, hashes []string) ([]struct {
+	Hash     string `db:"hash"`
+	Status   string `db:"status"`
+	FilePath string `db:"file_path"`
+}, error) {
+	if len(hashes) == 0 {
+		return []struct {
+			Hash     string `db:"hash"`
+			Status   string `db:"status"`
+			FilePath string `db:"file_path"`
+		}{}, nil
+	}
+
+	// Build the query with proper placeholders for PostgreSQL
+	placeholders := make([]string, len(hashes))
+	args := make([]interface{}, len(hashes))
+	for i, hash := range hashes {
+		placeholders[i] = fmt.Sprintf("$%d", i+1)
+		args[i] = hash
+	}
+
+	query := fmt.Sprintf(`SELECT hash, status, file_path FROM savedbooks WHERE hash IN (%s)`, strings.Join(placeholders, ","))
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []struct {
+		Hash     string `db:"hash"`
+		Status   string `db:"status"`
+		FilePath string `db:"file_path"`
+	}
+
+	for rows.Next() {
+		var result struct {
+			Hash     string `db:"hash"`
+			Status   string `db:"status"`
+			FilePath string `db:"file_path"`
+		}
+		err := rows.Scan(&result.Hash, &result.Status, &result.FilePath)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, result)
+	}
+
+	return results, nil
 }

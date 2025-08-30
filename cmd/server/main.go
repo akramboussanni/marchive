@@ -116,7 +116,7 @@ func main() {
 
 	createDefaultAdmin(repos)
 
-	downloadService := services.NewDownloadService(repos, "/app/downloads", config.App.AnnasApiKey)
+	downloadService := services.NewDownloadService(repos, config.App.DownloadDir, config.App.AnnasApiKey)
 	ctx, cancel := context.WithCancel(context.Background())
 	go downloadService.StartService(ctx)
 

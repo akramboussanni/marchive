@@ -2,22 +2,27 @@
 	import { onMount } from 'svelte';
 	import { Download, Clock, CheckCircle, XCircle, AlertCircle, Loader2, RefreshCw } from 'lucide-svelte';
 	import { books, type DownloadJob } from '$lib/stores/books';
-	import { isAuthenticated } from '$lib/stores/auth';
+	import { auth, isAuthenticated } from '$lib/stores/auth';
 	import { goto } from '$app/navigation';
 	import Pagination from '$lib/components/UI/Pagination.svelte';
 	import { showError, showSuccess } from '$lib/stores/notifications';
 
 	let downloads: DownloadJob[] = [];
 	let isLoading = false;
+	let downloadingHashes = new Set<string>(); // Track which downloads are in progress
 	let currentPage = 0;
 	let totalPages = 1;
 	let totalDownloads = 0;
 	const limit = 20;
 
-	onMount(() => {
+	onMount(async () => {
 		if (!$isAuthenticated) {
-			goto('/login');
-			return;
+			// Try to refresh the token before redirecting to login
+			const authSuccess = await auth.checkAuthWithRefresh();
+			if (!authSuccess) {
+				goto('/login');
+				return;
+			}
 		}
 		loadDownloads();
 	});
@@ -113,6 +118,38 @@
 		
 		const date = new Date(typeof timestamp === 'string' ? parseInt(timestamp) * 1000 : timestamp * 1000);
 		return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+	}
+
+	async function handleDownload(hash: string, title: string) {
+		if (downloadingHashes.has(hash)) return; // Prevent multiple downloads
+		
+		downloadingHashes.add(hash);
+		
+		try {
+			// Use the books store download method for proper authentication
+			const blob = await books.downloadBook(hash, title);
+			
+			// Create a download link
+			const url = window.URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			link.href = url;
+			link.download = `${title || 'book'}.pdf`; // Default to PDF, adjust as needed
+			
+			// Trigger download
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			
+			// Clean up
+			window.URL.revokeObjectURL(url);
+			
+			showSuccess('Download Started', 'Your download has begun. Check your downloads folder.');
+		} catch (error) {
+			console.error('Download error:', error);
+			showError('Download Failed', 'Unable to start download. Please try again.');
+		} finally {
+			downloadingHashes.delete(hash);
+		}
 	}
 
 	function getDownloadUrl(hash: string) {
@@ -263,13 +300,20 @@
 
 									<!-- Download Button -->
 									{#if download.status === 'ready' || download.status === 'completed'}
-										<a
-											href={getDownloadUrl(download.book_hash)}
-											class="btn-primary text-xs"
+										<button
+											on:click={() => handleDownload(download.book_hash, download.title)}
+											disabled={downloadingHashes.has(download.book_hash)}
+											class="btn-primary text-xs flex items-center space-x-1"
+											class:opacity-50={downloadingHashes.has(download.book_hash)}
 										>
-											<Download class="h-3 w-3 mr-1" />
-											Download
-										</a>
+											{#if downloadingHashes.has(download.book_hash)}
+												<Loader2 class="h-3 w-3 animate-spin" />
+												<span>Downloading...</span>
+											{:else}
+												<Download class="h-3 w-3" />
+												<span>Download</span>
+											{/if}
+										</button>
 									{/if}
 								</div>
 							</div>

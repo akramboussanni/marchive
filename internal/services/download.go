@@ -70,19 +70,51 @@ func (ds *DownloadService) processJob(ctx context.Context, job *model.DownloadJo
 
 	book, err := ds.repos.Book.GetBookByHash(ctx, job.BookHash)
 	if err != nil {
+		// Book doesn't exist, need to download it
 		err = ds.processNewBook(ctx, job)
 		if err != nil {
 			log.Printf("Failed to process new book: %v", err)
 			ds.repos.DownloadJob.UpdateJobStatus(ctx, job.ID, model.DownloadStatusFailed, 0, err.Error())
 			return
 		}
-	} else if book.Status == model.BookStatusReady {
+		// After successful download, mark job as completed
 		ds.repos.DownloadJob.UpdateJobStatus(ctx, job.ID, model.DownloadStatusCompleted, 100, "")
-		ds.repos.DownloadJob.UpdateJobFilePath(ctx, job.ID, book.FilePath)
-		log.Printf("Book %s already available, job %d completed", job.BookHash, job.ID)
+		log.Printf("Download job %d completed successfully", job.ID)
 		return
 	}
 
+	// Book already exists
+	if book.Status == model.BookStatusReady && book.FilePath != "" {
+		// Check if file actually exists on disk
+		if _, err := os.Stat(book.FilePath); err == nil {
+			// File exists, mark job as completed
+			ds.repos.DownloadJob.UpdateJobStatus(ctx, job.ID, model.DownloadStatusCompleted, 100, "")
+			ds.repos.DownloadJob.UpdateJobFilePath(ctx, job.ID, book.FilePath)
+			log.Printf("Book %s already available, job %d completed", job.BookHash, job.ID)
+			return
+		} else {
+			// File doesn't exist, need to re-download
+			log.Printf("Book %s marked as ready but file missing, re-downloading", job.BookHash)
+			err = ds.processNewBook(ctx, job)
+			if err != nil {
+				log.Printf("Failed to re-download book: %v", err)
+				ds.repos.DownloadJob.UpdateJobStatus(ctx, job.ID, model.DownloadStatusFailed, 0, err.Error())
+				return
+			}
+			ds.repos.DownloadJob.UpdateJobStatus(ctx, job.ID, model.DownloadStatusCompleted, 100, "")
+			log.Printf("Re-download job %d completed successfully", job.ID)
+			return
+		}
+	}
+
+	// Book exists but not ready, need to download it
+	err = ds.processNewBook(ctx, job)
+	if err != nil {
+		log.Printf("Failed to download existing book: %v", err)
+		ds.repos.DownloadJob.UpdateJobStatus(ctx, job.ID, model.DownloadStatusFailed, 0, err.Error())
+		return
+	}
+	
 	ds.repos.DownloadJob.UpdateJobStatus(ctx, job.ID, model.DownloadStatusCompleted, 100, "")
 	log.Printf("Download job %d completed successfully", job.ID)
 }

@@ -45,6 +45,14 @@
 		}
 	}
 
+	async function refreshAll() {
+		// Refresh both favorites and public library
+		await Promise.all([
+			loadBooks(),
+			$isAuthenticated ? loadFavorites() : Promise.resolve()
+		]);
+	}
+
 	async function loadMoreBooks() {
 		if (!$exploredBooks || loadingMore) return;
 
@@ -139,19 +147,10 @@
 					{/if}
 				</div>
 				
-				{#if $isAuthenticated}
-					<button
-						on:click={loadFavorites}
-						disabled={$isFavoritesLoading}
-						class="btn-secondary flex items-center justify-center sm:justify-start space-x-2 w-full sm:w-auto"
-					>
-						<RefreshCw class="h-4 w-4 {$isFavoritesLoading ? 'animate-spin' : ''}" />
-						<span>Refresh</span>
-					</button>
-				{/if}
+
 			</div>
 
-			{#if $isAuthenticated && $isFavoritesLoading}
+			{#if $isAuthenticated && $isFavoritesLoading && !loading}
 				<div class="flex items-center justify-center py-8">
 					<Loader2 class="h-6 w-6 animate-spin text-primary-500" />
 					<span class="ml-3 text-gray-400">Loading favorites...</span>
@@ -220,20 +219,28 @@
 		</div>
 		
 		<button
-			on:click={loadBooks}
-			disabled={loading}
+			on:click={refreshAll}
+			disabled={loading || ($isAuthenticated && $isFavoritesLoading)}
 			class="btn-secondary flex items-center justify-center sm:justify-start space-x-2 w-full sm:w-auto"
 		>
-			<RefreshCw class="h-4 w-4 {loading ? 'animate-spin' : ''}" />
-			<span>Refresh</span>
+			<RefreshCw class="h-4 w-4 {(loading || ($isAuthenticated && $isFavoritesLoading)) ? 'animate-spin' : ''}" />
+			<span>Refresh All</span>
 		</button>
 	</div>
 
 	<!-- Loading State -->
-	{#if loading}
+	{#if loading || ($isAuthenticated && $isFavoritesLoading)}
 		<div class="flex items-center justify-center py-16">
 			<Loader2 class="h-8 w-8 animate-spin text-primary-500" />
-			<span class="ml-3 text-gray-400">Loading library...</span>
+			<span class="ml-3 text-gray-400">
+				{#if loading && $isAuthenticated && $isFavoritesLoading}
+					Refreshing everything...
+				{:else if loading}
+					Loading library...
+				{:else if $isAuthenticated && $isFavoritesLoading}
+					Loading favorites...
+				{/if}
+			</span>
 		</div>
 	
 	<!-- Books Grid -->

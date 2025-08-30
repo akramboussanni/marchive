@@ -11,9 +11,14 @@
 	let passwordError = '';
 	let passwordSuccess = false;
 
-	onMount(() => {
+	onMount(async () => {
 		if (!$isAuthenticated) {
-			goto('/login');
+			// Try to refresh the token before redirecting to login
+			const authSuccess = await auth.checkAuthWithRefresh();
+			if (!authSuccess) {
+				goto('/login');
+				return;
+			}
 		}
 	});
 

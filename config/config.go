@@ -30,6 +30,7 @@ type AppConfig struct {
 	JwtExpirations map[string]int64 `env:"JWT_EXPIRATIONS" default:"{\"credential\":900,\"refresh\":129600}"`
 
 	AnnasApiKey string `env:"ANNAS_API_KEY" panic:"true"`
+	DownloadDir string `env:"DOWNLOAD_DIR" default:"./downloads"`
 }
 
 var App AppConfig

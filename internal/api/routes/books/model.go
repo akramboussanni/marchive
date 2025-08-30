@@ -11,13 +11,19 @@ type SearchRequest struct {
 	Offset int    `json:"offset,omitempty" example:"0"`
 }
 
+// BookWithStatus extends anna.Book with availability status
+type BookWithStatus struct {
+	*anna.Book
+	Status string `json:"status"` // "available" or "not_available"
+}
+
 type SearchResponse struct {
-	SearchID   int64        `json:"search_id,string,omitempty"`
-	Books      []*anna.Book `json:"books"`
-	Total      int          `json:"total"`
-	Query      string       `json:"query"`
-	Pagination Pagination   `json:"pagination"`
-	ExpiresAt  int64        `json:"expires_at,omitempty"`
+	SearchID   int64             `json:"search_id,string,omitempty"`
+	Books      []*BookWithStatus `json:"books"`
+	Total      int               `json:"total"`
+	Query      string            `json:"query"`
+	Pagination Pagination        `json:"pagination"`
+	ExpiresAt  int64             `json:"expires_at,omitempty"`
 }
 
 type Pagination struct {

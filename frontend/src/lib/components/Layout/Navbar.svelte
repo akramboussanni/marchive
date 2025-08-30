@@ -32,6 +32,16 @@
 		await auth.logout();
 		showUserMenu = false;
 	}
+
+	async function handleDownloadRequested(event: CustomEvent) {
+		// Refresh the explore page to update availability status
+		// This will update the book status in the search results
+		try {
+			await books.explore(24, 0);
+		} catch (error) {
+			console.error('Failed to refresh explore page:', error);
+		}
+	}
 </script>
 
 <nav class="bg-dark-900/95 backdrop-blur-sm border-b border-gray-800 sticky top-0 z-50">
@@ -265,6 +275,7 @@
 	<SearchModal
 		bind:query={searchQuery}
 		on:close={() => showSearchModal = false}
+		on:downloadRequested={handleDownloadRequested}
 	/>
 {/if}
 

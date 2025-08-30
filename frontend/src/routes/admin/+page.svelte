@@ -10,8 +10,12 @@
 
 	onMount(async () => {
 		if (!$isAuthenticated) {
-			goto('/login');
-			return;
+			// Try to refresh the token before redirecting to login
+			const authSuccess = await auth.checkAuthWithRefresh();
+			if (!authSuccess) {
+				goto('/login');
+				return;
+			}
 		}
 
 		if (!$isAdmin) {

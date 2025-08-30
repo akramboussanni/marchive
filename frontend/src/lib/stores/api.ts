@@ -1,3 +1,5 @@
+import { auth } from './auth';
+
 const API_BASE = '/api';
 
 interface ApiError {
@@ -17,7 +19,18 @@ class ApiClient {
 			...options,
 		};
 
-		return fetch(url, config);
+		let response = await fetch(url, config);
+
+		// If we get a 401 and this isn't a refresh request, try to refresh the token
+		if (response.status === 401 && endpoint !== '/auth/refresh') {
+			const refreshSuccess = await auth.handleUnauthorized();
+			if (refreshSuccess) {
+				// Retry the original request with the new token
+				response = await fetch(url, config);
+			}
+		}
+
+		return response;
 	}
 
 	async get(endpoint: string): Promise<Response> {
@@ -45,7 +58,9 @@ class ApiClient {
 	async handleResponse<T>(response: Response): Promise<T> {
 		if (!response.ok) {
 			const error = await response.json() as ApiError;
-			throw new Error(error.error || 'An error occurred');
+			const errorWithStatus = new Error(error.error || 'An error occurred');
+			(errorWithStatus as any).status = response.status;
+			throw errorWithStatus;
 		}
 		return response.json();
 	}

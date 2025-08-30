@@ -37,6 +37,10 @@ func NewBookRouter(repos *repo.Repos) http.Handler {
 	r.Group(func(r chi.Router) {
 		middleware.AddRatelimit(r, 50, 1*time.Minute)
 		r.Get("/job/{jobID}", br.HandleJobStatus)
+	})
+
+	r.Group(func(r chi.Router) {
+		middleware.AddRatelimit(r, 30, 1*time.Minute)
 		r.Get("/{hash}/download", br.HandleDownloadFile)
 	})
 

@@ -149,6 +149,14 @@ export const books = {
 		return `/api/books/${hash}/download`;
 	},
 
+	async downloadBook(hash: string, title: string): Promise<Blob> {
+		const response = await api.get(`/books/${hash}/download`);
+		if (!response.ok) {
+			throw new Error('Download failed');
+		}
+		return response.blob();
+	},
+
 	updateJobStatus(jobId: string, status: Partial<DownloadJob>): void {
 		downloadJobs.update(jobs => 
 			jobs.map(job => job.id === jobId ? { ...job, ...status } : job)
