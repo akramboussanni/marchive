@@ -2,19 +2,22 @@ version: '3.8'
 
 services:
   marchive:
-    image: ghcr.io/akramboussanni/marchive:main
+    build: .
     environment:
       # CHANGE THESE FOR PRODUCTION:
       - JWT_SECRET=your-super-secret-jwt-key-here-change-in-production
       - ANNAS_API_KEY=your-annas-api-key-here
       # CHANGE THESE FOR YOUR DOMAIN:
-      - FRONTEND_CORS=http://localhost
+      - FRONTEND_CORS=http://localhost:5173
       - COOKIE_DOMAIN=localhost
       # These can stay as-is:
       - LOGGER_TYPE=zap
       - DB_CONNECTION_STRING=postgresql://marchive:password@db:5432/marchive?sslmode=disable
       - APP_PORT=9520
       - TRUST_PROXY_IP_HEADERS=true
+    ports:
+      - "9520:9520"  # Backend API
+      - "5173:5173"  # Frontend dev server
     volumes:
       - ./downloads:/app/downloads
     depends_on:
