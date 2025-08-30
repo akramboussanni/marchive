@@ -46,6 +46,7 @@ func NewBookRouter(repos *repo.Repos) http.Handler {
 		r.Post("/search", br.HandleSearch)
 		r.Get("/downloads", br.HandleUserDownloads)
 		r.Get("/favorites", br.HandleGetFavorites)
+		r.Post("/favorite", br.HandleToggleFavorite)
 	})
 
 	r.Group(func(r chi.Router) {
@@ -53,7 +54,6 @@ func NewBookRouter(repos *repo.Repos) http.Handler {
 		middleware.AddAuth(r, repos.User, repos.Token)
 		r.Post("/download", br.HandleRequestDownload)
 		r.Post("/download/cached", br.HandleCachedDownloadRequest)
-		r.Post("/favorite", br.HandleToggleFavorite)
 	})
 
 	return r

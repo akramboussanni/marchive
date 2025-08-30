@@ -20,7 +20,7 @@ services:
     ports:
       - "9520:9520"
     volumes:
-      - ./downloads:/app/backend/downloads
+      - ./downloads:/app/downloads:rw
     depends_on:
       db:
         condition: service_healthy

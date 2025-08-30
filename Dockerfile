@@ -3,7 +3,7 @@
 FROM node:18-alpine AS frontend-builder
 
 # Set working directory for frontend
-WORKDIR /app/backend/frontend
+WORKDIR /app/frontend
 
 # Copy frontend package files
 COPY frontend/package*.json ./
@@ -26,7 +26,7 @@ FROM golang:1.24-alpine AS backend-builder
 RUN apk add --no-cache git ca-certificates tzdata
 
 # Set working directory for backend
-WORKDIR /app/backend
+WORKDIR /app
 
 # Copy Go module files
 COPY go.mod go.sum ./
@@ -51,17 +51,18 @@ RUN addgroup -g 1001 -S appgroup && \
     adduser -u 1001 -S appuser -G appgroup
 
 # Set working directory
-WORKDIR /app/backend
+WORKDIR /app
 
 # Copy Go binary from backend stage
 COPY --from=backend-builder /app/backend/main ./
 
 # Copy built frontend from frontend stage
-COPY --from=frontend-builder /app/backend/frontend/build ./frontend/build
+COPY --from=frontend-builder /app/frontend/build ./frontend/build
 
-# Create necessary directories
-RUN mkdir -p /app/backend/downloads && \
-    chown -R appuser:appgroup /app
+# Create necessary directories and set proper permissions
+RUN mkdir -p downloads && \
+    chown -R appuser:appgroup downloads && \
+    chmod 755 downloads
 
 # Switch to non-root user
 USER appuser
