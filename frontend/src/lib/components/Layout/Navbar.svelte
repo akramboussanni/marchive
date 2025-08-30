@@ -46,13 +46,13 @@
 			</div>
 
 			<!-- Search Bar - Hidden on mobile, shown on larger screens -->
-			<div class="hidden md:flex flex-1 max-w-2xl mx-8">
-				<div class="relative">
-					<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+			<div class="navbar-desktop flex-1 max-w-3xl mx-8">
+				<div class="relative w-full">
+					<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
 						{#if $isAuthenticated}
-							<Search class="h-5 w-5 text-gray-400" />
+							<Search class="h-6 w-6 text-gray-400" />
 						{:else}
-							<Lock class="h-5 w-5 text-gray-500" />
+							<Lock class="h-6 w-6 text-gray-500" />
 						{/if}
 					</div>
 					<input
@@ -60,18 +60,18 @@
 						type="text"
 						bind:value={searchQuery}
 						on:keydown={handleKeydown}
-						placeholder={$isAuthenticated ? "Search books... (Ctrl+/ to focus)" : "Sign in to search books"}
-						class="block w-full pl-10 pr-12 py-2 bg-dark-800 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+						placeholder={$isAuthenticated ? "Search for books, authors, or topics... (Ctrl+/ to focus)" : "Sign in to search books"}
+						class="block w-full pl-12 pr-24 py-3 bg-dark-800 border border-gray-700 rounded-xl text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-lg"
 						class:opacity-50={!$isAuthenticated}
 						disabled={!$isAuthenticated}
 					/>
 					<button
 						on:click={handleSearch}
-						class="absolute inset-y-0 right-0 pr-3 flex items-center"
+						class="absolute inset-y-0 right-0 pr-4 flex items-center"
 						disabled={!$isAuthenticated}
 						class:opacity-50={!$isAuthenticated}
 					>
-						<kbd class="px-2 py-1 text-xs text-gray-400 bg-dark-700 rounded border border-gray-600">
+						<kbd class="px-3 py-1.5 text-sm text-gray-400 bg-dark-700 rounded-lg border border-gray-600 font-mono">
 							{#if $isAuthenticated}
 								Enter
 							{:else}
@@ -83,7 +83,7 @@
 			</div>
 
 			<!-- Mobile Search Button -->
-			<div class="md:hidden">
+			<div class="navbar-mobile">
 				<button
 					on:click={() => showSearchModal = true}
 					class="btn-ghost p-2"
@@ -95,27 +95,27 @@
 			</div>
 
 			<!-- Desktop Navigation - Hidden on mobile -->
-			<div class="hidden md:flex items-center space-x-4">
+			<div class="navbar-desktop flex items-center space-x-6">
 				{#if $isAuthenticated}
 					<!-- Downloads -->
 					<a
 						href="/downloads"
-						class="btn-ghost flex items-center space-x-2"
+						class="btn-ghost flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-dark-800 transition-colors"
 						class:bg-dark-800={$page.url.pathname === '/downloads'}
 					>
-						<Download class="h-5 w-5" />
-						<span class="hidden sm:inline">Downloads</span>
+						<Download class="h-6 w-6" />
+						<span class="text-gray-200 font-medium">Downloads</span>
 					</a>
 
 					<!-- Admin -->
 					{#if $isAdmin}
 						<a
 							href="/admin"
-							class="btn-ghost flex items-center space-x-2"
+							class="btn-ghost flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-dark-800 transition-colors"
 							class:bg-dark-800={$page.url.pathname.startsWith('/admin')}
 						>
-							<Settings class="h-5 w-5" />
-							<span class="hidden sm:inline">Admin</span>
+							<Settings class="h-6 w-6" />
+							<span class="text-gray-200 font-medium">Admin</span>
 						</a>
 					{/if}
 
@@ -123,10 +123,10 @@
 					<div class="relative">
 						<button
 							on:click={() => showUserMenu = !showUserMenu}
-							class="btn-ghost flex items-center space-x-2"
+							class="btn-ghost flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-dark-800 transition-colors"
 						>
-							<User class="h-5 w-5" />
-							<span class="hidden sm:inline">{$user?.username}</span>
+							<User class="h-6 w-6" />
+							<span class="text-gray-200 font-medium">{$user?.username}</span>
 						</button>
 
 						{#if showUserMenu}
@@ -149,12 +149,12 @@
 						{/if}
 					</div>
 				{:else}
-					<a href="/login" class="btn-primary">Sign In</a>
+					<a href="/login" class="btn-primary px-6 py-2.5 text-base font-medium">Sign In</a>
 				{/if}
 			</div>
 
 			<!-- Mobile Menu Button -->
-			<div class="md:hidden">
+			<div class="navbar-mobile">
 				<button
 					on:click={() => showMobileMenu = !showMobileMenu}
 					class="btn-ghost p-2"
@@ -170,7 +170,7 @@
 
 		<!-- Mobile Menu -->
 		{#if showMobileMenu}
-			<div class="md:hidden border-t border-gray-800 bg-dark-900/95 backdrop-blur-sm">
+			<div class="navbar-mobile border-t border-gray-800 bg-dark-900/95 backdrop-blur-sm">
 				<div class="px-2 pt-2 pb-3 space-y-1">
 					{#if $isAuthenticated}
 						<!-- Mobile Search Bar -->

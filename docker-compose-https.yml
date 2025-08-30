@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   marchive:
     image: ghcr.io/akramboussanni/marchive:main

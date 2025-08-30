@@ -100,7 +100,7 @@
 }
 
 /* Mobile-specific improvements */
-@media (max-width: 640px) {
+@media (max-width: 1023px) {
 	/* Improve touch targets on mobile */
 	.btn, .btn-primary, .btn-secondary, .btn-ghost {
 		@apply min-h-[44px];
@@ -133,22 +133,43 @@
 	}
 }
 
-	/* Desktop text sizing */
-	@media (min-width: 640px) {
-		.btn {
-			font-size: 0.875rem; /* text-sm equivalent */
-			padding-left: 1rem; /* sm:px-4 equivalent */
-			padding-right: 1rem; /* sm:px-4 equivalent */
-		}
-		
-		.input {
-			font-size: 0.875rem; /* text-sm equivalent */
-		}
+/* Desktop text sizing */
+@media (min-width: 1024px) {
+	.btn {
+		font-size: 0.875rem; /* text-sm equivalent */
+		padding-left: 1rem; /* sm:px-4 equivalent */
+		padding-right: 1rem; /* sm:px-4 equivalent */
 	}
+	
+	.input {
+		font-size: 0.875rem; /* text-sm equivalent */
+	}
+}
 
 /* Improve focus states for accessibility */
 .btn:focus, .input:focus {
 	@apply ring-2 ring-primary-500 ring-offset-2 ring-offset-dark-950;
+}
+
+/* Force responsive behavior for navbar */
+@media (max-width: 1023px) {
+	.navbar-desktop {
+		display: none !important;
+	}
+	
+	.navbar-mobile {
+		display: block !important;
+	}
+}
+
+@media (min-width: 1024px) {
+	.navbar-desktop {
+		display: flex !important;
+	}
+	
+	.navbar-mobile {
+		display: none !important;
+	}
 }
 
 /* Smooth transitions for mobile menu */
@@ -163,3 +184,5 @@
 .mobile-menu-enter-to {
 	@apply opacity-100 transform translate-y-0;
 }
+
+
