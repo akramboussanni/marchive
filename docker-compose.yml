@@ -3,6 +3,8 @@ version: '3.8'
 services:
   marchive:
     build: .
+    networks:
+      - marchive-network
     environment:
       # CHANGE THESE FOR PRODUCTION:
       - JWT_SECRET=your-super-secret-jwt-key-here-change-in-production
@@ -27,12 +29,16 @@ services:
 
   db:
     image: postgres:13-alpine
+    networks:
+      - marchive-network
     environment:
       - POSTGRES_DB=marchive
       - POSTGRES_USER=marchive
       - POSTGRES_PASSWORD=password
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"  # Database port (optional, for debugging)
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U marchive -d marchive"]
@@ -40,6 +46,10 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+
+networks:
+  marchive-network:
+    driver: bridge
 
 volumes:
   postgres_data:

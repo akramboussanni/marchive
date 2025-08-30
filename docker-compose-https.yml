@@ -3,6 +3,8 @@ version: '3.8'
 services:
   marchive:
     build: .
+    networks:
+      - marchive-network
     ports:
       - "9520:9520"  # Backend API
       - "5173:5173"  # Frontend dev server
@@ -27,6 +29,8 @@ services:
 
   db:
     image: postgres:13-alpine
+    networks:
+      - marchive-network
     environment:
       - POSTGRES_DB=marchive
       - POSTGRES_USER=marchive
@@ -34,7 +38,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5432:5432"  # Database port (optional, for debugging)
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U marchive -d marchive"]
@@ -42,6 +46,10 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+
+networks:
+  marchive-network:
+    driver: bridge
 
 volumes:
   postgres_data:
