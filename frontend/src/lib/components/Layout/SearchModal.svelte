@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount } from 'svelte';
-	import { Search, X, Download, Loader2, ChevronLeft, ChevronRight } from 'lucide-svelte';
+	import { Search, X, Download, Loader2, ChevronLeft, ChevronRight, Lock } from 'lucide-svelte';
 	import { books, isSearching, type Book, type SearchResponse } from '$lib/stores/books';
 	import { isAuthenticated } from '$lib/stores/auth';
 	import { showError, showSuccess } from '$lib/stores/notifications';
@@ -28,12 +28,22 @@
 	}
 
 	function debounceSearch() {
+		if (!$isAuthenticated) {
+			showError('Authentication Required', 'Please sign in to search for books. Search is only available to authenticated users since you cannot download books without an account.');
+			return;
+		}
+		
 		clearTimeout(searchTimeout);
 		currentPage = 0; // Reset to first page on new search
 		searchTimeout = setTimeout(performSearch, 300);
 	}
 
 	async function performSearch(page = 0) {
+		if (!$isAuthenticated) {
+			showError('Authentication Required', 'Please sign in to search for books. Search is only available to authenticated users since you cannot download books without an account.');
+			return;
+		}
+
 		if (!query.trim()) {
 			searchResults = [];
 			currentSearchResponse = null;

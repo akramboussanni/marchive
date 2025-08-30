@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/akramboussanni/marchive/config"
 )
@@ -26,12 +27,24 @@ func SecurityHeaders(next http.Handler) http.Handler {
 
 func CORSHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
-
+		// Since frontend is now served by backend, we only need minimal CORS for API calls
+		// from potential external clients (if any)
 		origin := r.Header.Get("Origin")
+
 		if origin != "" {
-			if config.App.FrontendCors == "*" || origin == config.App.FrontendCors {
+			// Check if the origin matches our configured domain
+			configuredDomain := config.App.Domain
+
+			// Remove port for comparison
+			domainWithoutPort := configuredDomain
+			if colonIndex := strings.LastIndex(configuredDomain, ":"); colonIndex > 0 {
+				domainWithoutPort = configuredDomain[:colonIndex]
+			}
+
+			// Check if origin contains our domain (allows for subdomains and ports)
+			if strings.Contains(origin, domainWithoutPort) {
 				w.Header().Set("Access-Control-Allow-Origin", origin)
+				w.Header().Set("Access-Control-Allow-Credentials", "true")
 			}
 		}
 

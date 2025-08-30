@@ -21,8 +21,7 @@ type AppConfig struct {
 	RecaptchaSecret    string  `env:"RECAPTCHA_V3_SECRET"`
 	RecaptchaThreshold float32 `env:"RECAPTCHA_THRESHOLD" default:"0.5"`
 
-	CookieDomain string `env:"COOKIE_DOMAIN" panic:"warn" default:"localhost"`
-	FrontendCors string `env:"FRONTEND_CORS" panic:"warn" default:"*"`
+	Domain string `env:"DOMAIN" default:"localhost"`
 
 	TLSEnabled  bool   `env:"TLS_ENABLED" default:"false"`
 	TLSCertFile string `env:"TLS_CERT_FILE"`

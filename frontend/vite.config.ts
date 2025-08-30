@@ -11,8 +11,7 @@ export default defineConfig(({ mode }) => {
 			proxy: {
 				'/api': {
 					target: env.BACKEND_URL || 'http://localhost:9520',
-					changeOrigin: true,
-					rewrite: (path) => path.replace(/^\/api/, '')
+					changeOrigin: true
 				}
 			}
 		},

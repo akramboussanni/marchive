@@ -5,22 +5,20 @@ services:
     image: ghcr.io/akramboussanni/marchive:main
     networks:
       - marchive-network
-    command: ["sh", "-c", "cd /app/frontend && pnpm start & cd /app/backend && ./main; wait"]
-    ports:
-      - "9520:9520"  # Backend API
-      - "5173:5173"  # Frontend dev server
+    command: ["./main"]
     environment:
       # CHANGE THESE FOR PRODUCTION:
       - JWT_SECRET=your-super-secret-jwt-key-here-change-in-production
       - ANNAS_API_KEY=your-annas-api-key-here
-      # CHANGE THESE FOR YOUR DOMAIN:
-      - FRONTEND_CORS=http://localhost:5173
-      - COOKIE_DOMAIN=localhost
+      # Set your domain (for cookies and CORS)
+      - DOMAIN=example.com
       # These can stay as-is:
-      - LOGGER_TYPE=zap
+      - LOGGER_TYPE=std
       - DB_CONNECTION_STRING=postgresql://marchive:password@db:5432/marchive?sslmode=disable
       - APP_PORT=9520
       - TRUST_PROXY_IP_HEADERS=false
+    ports:
+      - "9520:9520"
     volumes:
       - ./downloads:/app/backend/downloads
     depends_on:
@@ -39,7 +37,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"  # Database port (optional, for debugging)
+      - "5432:5432"
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U marchive -d marchive"]

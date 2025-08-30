@@ -26,12 +26,13 @@ Use the `docker-compose.yml` file.
 |----------|-------------|----------|---------|
 | `JWT_SECRET` | Secret key for JWT token signing | ✅ | - |
 | `ANNAS_API_KEY` | API key for Anna book service | ✅ | - |
+| `DOMAIN` | Domain for cookies and CORS (e.g., localhost, yourdomain.com) | ❌ | `localhost` |
 | `APP_PORT` | Backend server port | ❌ | `9520` |
 | `DB_CONNECTION_STRING` | PostgreSQL connection string | ❌ | `postgresql://postgres:postgres@localhost:5432/postgres?sslmode=disable` |
-| `LOGGER_TYPE` | Logging system type | ❌ | `zap` |
-| `FRONTEND_CORS` | Frontend CORS origin | ❌ | `*` |
-| `COOKIE_DOMAIN` | Cookie domain for authentication | ❌ | `localhost` |
+| `LOGGER_TYPE` | Logging system type | ❌ | `std` |
 | `TRUST_PROXY_IP_HEADERS` | Trust proxy IP headers | ❌ | `false` |
+
+**Note**: The `DOMAIN` variable is used for both cookie domain and CORS origin configuration. Set this to your production domain when deploying (ex: example.com)
 
 ## 🛠️ Development
 
@@ -40,65 +41,69 @@ Use the `docker-compose.yml` file.
 - Go 1.21+
 - Node.js 18+
 - pnpm
-- you don't need postgres, if ran with -tags=debug it will run as sqlite db.
+- you don't need postgres, if your go is ran with `-tags=debug` it will run as sqlite db. (ex: `go run -tags=debug cmd/server/main.go`)
 
-### Backend Setup
+### Local Development Setup
 
-```bash
-cd backend
-go mod download
-go run -tags=debug cmd/server/main.go
-```
-
-### Frontend Setup
+#### 1. Build the Frontend
 
 ```bash
 cd frontend
 pnpm install
-pnpm dev
+pnpm build
 ```
+
+This will create a `build/` directory with the compiled frontend assets.
+
+#### 2. Run the Backend
+
+```bash
+# From the root directory
+go run -tags=debug cmd/server/main.go
+```
+
+The `-tags=debug` flag enables SQLite mode for local development, so you don't need PostgreSQL running.
+
+#### 3. Access the Application
+
+Open your browser and go to `http://localhost:9520` - the backend will serve both the API and the frontend.
+
+#### Hot reload setup
+I forgot to do this. I will add it some day.
 
 ## 📁 Project Structure
 
 ```
-marchived/
-├── backend/                 # Go backend API
-│   ├── cmd/                # Application entry points
-│   ├── internal/           # Private application code
-│   │   ├── anna/          # Book scraping service
-│   │   ├── api/           # HTTP handlers and routes
-│   │   └── applog/        # Logging configuration
-│   ├── config/            # Configuration management
-│   └── docs/              # Documentation
-├── frontend/               # Svelte frontend application
-│   ├── src/               # Source code
-│   │   ├── components/    # Reusable UI components
-│   │   ├── routes/        # Page components
-│   │   └── stores/        # State management
-│   └── public/            # Static assets
-├── Dockerfile             # Multi-stage Docker build
-├── docker-compose.yml     # Development environment
-└── README.md             # This file
+marchive/
+├── cmd/                     # Application entry points
+│   └── server/             # Main server binary
+├── internal/                # Private application code
+│   ├── anna/               # Book scraping service
+│   ├── api/                # HTTP handlers and routes
+│   ├── applog/             # Logging configuration
+│   ├── config/             # Configuration management
+│   ├── db/                 # Database layer
+│   ├── jwt/                # JWT authentication
+│   ├── middleware/         # HTTP middleware
+│   ├── model/              # Data models
+│   ├── repo/               # Repository layer
+│   ├── services/           # Business logic services
+│   └── utils/              # Utility functions
+├── frontend/                # Svelte frontend application
+│   ├── src/                # Source code
+│   │   ├── components/     # Reusable UI components
+│   │   ├── routes/         # Page components
+│   │   ├── stores/         # State management
+│   │   └── utils/          # Frontend utilities
+│   ├── build/              # Built frontend assets (generated)
+│   ├── package.json        # Frontend dependencies
+│   └── pnpm-lock.yaml      # Locked dependency versions
+├── config/                  # Configuration files
+├── downloads/               # Downloaded book storage
+├── Dockerfile              # Multi-stage Docker build
+├── docker-compose.yml      # Development environment
+├── docker-compose-https.yml # HTTPS development environment
+├── go.mod                  # Go module definition
+├── go.sum                  # Go dependency checksums
+└── README.md               # This file
 ```
-
-## 🔧 Configuration
-
-### Backend Configuration
-
-The backend uses a configuration system that supports:
-- Environment variables
-- Configuration files
-- Default values
-
-Key configuration areas:
-- **Database**: Connection settings and pooling
-- **Authentication**: JWT configuration and security
-- **Logging**: Log levels and output formats
-- **API**: Rate limiting and CORS settings
-
-### Frontend Configuration
-
-The frontend is configured through:
-- Environment variables for API endpoints
-- Tailwind CSS for styling
-- Svelte stores for state management

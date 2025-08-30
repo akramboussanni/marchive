@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { Search, BookOpen, Settings, LogOut, User, Download } from 'lucide-svelte';
+	import { Search, BookOpen, Settings, LogOut, User, Download, Lock } from 'lucide-svelte';
 	import { auth, user, isAuthenticated, isAdmin } from '$lib/stores/auth';
 	import { books } from '$lib/stores/books';
 	import SearchModal from './SearchModal.svelte';
@@ -48,22 +48,34 @@
 			<div class="flex-1 max-w-2xl mx-8">
 				<div class="relative">
 					<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-						<Search class="h-5 w-5 text-gray-400" />
+						{#if $isAuthenticated}
+							<Search class="h-5 w-5 text-gray-400" />
+						{:else}
+							<Lock class="h-5 w-5 text-gray-500" />
+						{/if}
 					</div>
 					<input
 						id="search-input"
 						type="text"
 						bind:value={searchQuery}
 						on:keydown={handleKeydown}
-						placeholder="Search books... (Ctrl+/ to focus)"
+						placeholder={$isAuthenticated ? "Search books... (Ctrl+/ to focus)" : "Sign in to search books"}
 						class="block w-full pl-10 pr-12 py-2 bg-dark-800 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+						class:opacity-50={!$isAuthenticated}
+						disabled={!$isAuthenticated}
 					/>
 					<button
 						on:click={handleSearch}
 						class="absolute inset-y-0 right-0 pr-3 flex items-center"
+						disabled={!$isAuthenticated}
+						class:opacity-50={!$isAuthenticated}
 					>
 						<kbd class="px-2 py-1 text-xs text-gray-400 bg-dark-700 rounded border border-gray-600">
-							Enter
+							{#if $isAuthenticated}
+								Enter
+							{:else}
+								Locked
+							{/if}
 						</kbd>
 					</button>
 				</div>

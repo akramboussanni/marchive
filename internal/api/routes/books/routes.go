@@ -32,7 +32,6 @@ func NewBookRouter(repos *repo.Repos) http.Handler {
 	r.Group(func(r chi.Router) {
 		middleware.AddRatelimit(r, 30, 1*time.Minute)
 		r.Get("/explore", br.HandleExplore)
-		r.Post("/search", br.HandleSearch)
 		r.Get("/job/{jobID}", br.HandleJobStatus)
 		r.Get("/{hash}/download", br.HandleDownloadFile)
 	})
@@ -40,6 +39,7 @@ func NewBookRouter(repos *repo.Repos) http.Handler {
 	r.Group(func(r chi.Router) {
 		middleware.AddRatelimit(r, 10, 1*time.Minute)
 		middleware.AddAuth(r, repos.User, repos.Token)
+		r.Post("/search", br.HandleSearch)
 		r.Post("/download", br.HandleRequestDownload)
 		r.Post("/download/cached", br.HandleCachedDownloadRequest)
 		r.Get("/downloads", br.HandleUserDownloads)
