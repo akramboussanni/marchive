@@ -14,6 +14,7 @@ type AdminRouter struct {
 	TokenRepo           *repo.TokenRepo
 	BookRepo            *repo.BookRepo
 	DownloadRequestRepo *repo.DownloadRequestRepo
+	RequestCreditsRepo  *repo.RequestCreditsRepo
 }
 
 func NewAdminRouter(repos *repo.Repos) http.Handler {
@@ -22,6 +23,7 @@ func NewAdminRouter(repos *repo.Repos) http.Handler {
 		TokenRepo:           repos.Token,
 		BookRepo:            repos.Book,
 		DownloadRequestRepo: repos.DownloadRequest,
+		RequestCreditsRepo:  repos.RequestCredits,
 	}
 	r := chi.NewRouter()
 
@@ -41,6 +43,11 @@ func NewAdminRouter(repos *repo.Repos) http.Handler {
 		r.Delete("/users/{userID}", ar.HandleDeleteUser)
 		r.Post("/users/{userID}/password", ar.HandleChangeUserPassword)
 		r.Post("/users/{userID}/invalidate-sessions", ar.HandleInvalidateUserSessions)
+
+		// Request credits management
+		r.Post("/users/credits/grant", ar.HandleGrantRequestCredits)
+		r.Get("/users/credits", ar.HandleListUsersWithCredits)
+		r.Get("/users/{userID}/credits", ar.HandleGetUserCredits)
 	})
 
 	return r

@@ -1,15 +1,37 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { Search, BookOpen, Settings, LogOut, User, Download, Lock, Menu, X } from 'lucide-svelte';
+	import { Search, BookOpen, Settings, LogOut, User, Download, Lock, Menu, X, Gift, Mail } from 'lucide-svelte';
 	import { auth, user, isAuthenticated, isAdmin } from '$lib/stores/auth';
 	import { books } from '$lib/stores/books';
 	import SearchModal from './SearchModal.svelte';
+	import { onMount } from 'svelte';
 
 	let searchQuery = '';
 	let showSearchModal = false;
 	let showUserMenu = false;
 	let showMobileMenu = false;
+	let requestCredits = 0;
+
+	onMount(async () => {
+		if ($isAuthenticated) {
+			await loadRequestCredits();
+		}
+	});
+
+	async function loadRequestCredits() {
+		try {
+			const response = await fetch('/api/auth/me/credits', {
+				credentials: 'include'
+			});
+			if (response.ok) {
+				const data = await response.json();
+				requestCredits = data.request_credits;
+			}
+		} catch (error) {
+			console.error('Failed to load request credits:', error);
+		}
+	}
 
 	async function handleSearch() {
 		if (searchQuery.trim()) {
@@ -38,6 +60,8 @@
 		// This will update the book status in the search results
 		try {
 			await books.explore(24, 0);
+			// Also refresh credits in case they were used
+			await loadRequestCredits();
 		} catch (error) {
 			console.error('Failed to refresh explore page:', error);
 		}
@@ -117,6 +141,16 @@
 						<span class="text-gray-200 font-medium">Downloads</span>
 					</a>
 
+					<!-- Invites -->
+					<a
+						href="/invites"
+						class="btn-ghost flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-dark-800 transition-colors"
+						class:bg-dark-800={$page.url.pathname === '/invites'}
+					>
+						<Mail class="h-6 w-6" />
+						<span class="text-gray-200 font-medium">Invites</span>
+					</a>
+
 					<!-- Admin -->
 					{#if $isAdmin}
 						<a
@@ -131,6 +165,20 @@
 
 					<!-- User Menu -->
 					<div class="relative">
+						<!-- Request Credits Display -->
+						{#if requestCredits > 0}
+							<div class="flex items-center space-x-2 mr-4 px-3 py-2 bg-primary-500/20 border border-primary-500/30 rounded-lg group relative">
+								<Gift class="h-4 w-4 text-primary-400" />
+								<span class="text-sm text-primary-300 font-medium">{requestCredits} credits</span>
+								
+								<!-- Tooltip -->
+								<div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-dark-800 text-gray-200 text-xs rounded-lg border border-gray-700 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+									Request credits allow you to download books<br/>beyond your daily limit
+									<div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-dark-800"></div>
+								</div>
+							</div>
+						{/if}
+
 						<button
 							on:click={() => showUserMenu = !showUserMenu}
 							class="btn-ghost flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-dark-800 transition-colors"
@@ -183,6 +231,19 @@
 			<div class="navbar-mobile border-t border-gray-800 bg-dark-900/95 backdrop-blur-sm">
 				<div class="px-2 pt-2 pb-3 space-y-1">
 					{#if $isAuthenticated}
+						<!-- Request Credits Display (Mobile) -->
+						{#if requestCredits > 0}
+							<div class="px-3 py-2">
+								<div class="flex items-center justify-center space-x-2 px-3 py-2 bg-primary-500/20 border border-primary-500/30 rounded-lg">
+									<Gift class="h-4 w-4 text-primary-400" />
+									<span class="text-sm text-primary-300 font-medium">{requestCredits} request credits</span>
+								</div>
+								<div class="text-xs text-gray-500 text-center mt-1">
+									Allow extra downloads beyond daily limit
+								</div>
+							</div>
+						{/if}
+
 						<!-- Mobile Search Bar -->
 						<div class="px-3 py-2">
 							<div class="relative">
@@ -215,6 +276,18 @@
 							<div class="flex items-center space-x-3">
 								<Download class="h-5 w-5" />
 								<span>Downloads</span>
+							</div>
+						</a>
+
+						<a
+							href="/invites"
+							class="block px-3 py-2 text-base font-medium text-gray-300 hover:bg-dark-800 hover:text-white rounded-md transition-colors"
+							class:bg-dark-800={$page.url.pathname === '/invites'}
+							on:click={() => showMobileMenu = false}
+						>
+							<div class="flex items-center space-x-3">
+								<Mail class="h-5 w-5" />
+								<span>Invites</span>
 							</div>
 						</a>
 
@@ -252,17 +325,6 @@
 								<span>Sign Out</span>
 							</div>
 						</button>
-					{:else}
-						<a
-							href="/login"
-							class="block px-3 py-2 text-base font-medium text-gray-300 hover:bg-dark-800 hover:text-white rounded-md transition-colors"
-							on:click={() => showMobileMenu = false}
-						>
-							<div class="flex items-center space-x-3">
-								<User class="h-5 w-5" />
-								<span>Sign In</span>
-							</div>
-						</a>
 					{/if}
 				</div>
 			</div>
@@ -272,11 +334,7 @@
 
 <!-- Search Modal -->
 {#if showSearchModal}
-	<SearchModal
-		bind:query={searchQuery}
-		on:close={() => showSearchModal = false}
-		on:downloadRequested={handleDownloadRequested}
-	/>
+	<SearchModal {searchQuery} on:close={() => showSearchModal = false} on:downloadRequested={handleDownloadRequested} />
 {/if}
 
 <!-- Click outside to close user menu -->

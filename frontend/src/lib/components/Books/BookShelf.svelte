@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { Loader2, RefreshCw, Heart, Star } from 'lucide-svelte';
+	import { Loader2, RefreshCw, Heart, Star, Gift } from 'lucide-svelte';
 	import type { Book } from '$lib/stores/books';
 	import { books, exploredBooks, userFavorites, isFavoritesLoading } from '$lib/stores/books';
 	import { isAuthenticated } from '$lib/stores/auth';
@@ -17,12 +17,35 @@
 	let favoritesPage = 0;
 	const pageSize = 24;
 
+	// Download status
+	let downloadStatus: any = null;
+	let statusLoading = false;
+
 	onMount(() => {
 		loadBooks();
 		if ($isAuthenticated) {
 			loadFavorites();
+			loadDownloadStatus();
 		}
 	});
+
+	async function loadDownloadStatus() {
+		if (!$isAuthenticated) return;
+		
+		statusLoading = true;
+		try {
+			const response = await fetch('/api/books/download-status', {
+				credentials: 'include'
+			});
+			if (response.ok) {
+				downloadStatus = await response.json();
+			}
+		} catch (error) {
+			console.error('Failed to load download status:', error);
+		} finally {
+			statusLoading = false;
+		}
+	}
 
 	async function loadBooks() {
 		loading = true;
@@ -49,7 +72,8 @@
 		// Refresh both favorites and public library
 		await Promise.all([
 			loadBooks(),
-			$isAuthenticated ? loadFavorites() : Promise.resolve()
+			$isAuthenticated ? loadFavorites() : Promise.resolve(),
+			$isAuthenticated ? loadDownloadStatus() : Promise.resolve()
 		]);
 	}
 
@@ -126,6 +150,57 @@
 
 <div class="space-y-6">
 
+	<!-- Download Status Section -->
+	{#if $isAuthenticated && downloadStatus && !statusLoading}
+		<div class="bg-dark-800/50 rounded-lg p-4 sm:p-6 border border-gray-700">
+			<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-3 sm:space-y-0">
+				<div class="flex items-center space-x-2">
+					<Gift class="h-5 w-5 text-primary-400" />
+					<h2 class="text-lg font-semibold text-gray-100">Your Download Status</h2>
+				</div>
+				<div class="text-xs text-gray-500">
+					Daily limit: {downloadStatus.daily_limit} • Credits allow extra downloads
+				</div>
+			</div>
+			
+			<div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+				<!-- Daily Downloads -->
+				<div class="text-center p-3 bg-dark-700 rounded-lg">
+					<div class="text-xl font-bold text-gray-100">{downloadStatus.downloads_used}</div>
+					<div class="text-sm text-gray-400">Used Today</div>
+					<div class="text-xs text-gray-500">of {downloadStatus.daily_limit}</div>
+				</div>
+				
+				<!-- Remaining Downloads -->
+				<div class="text-center p-3 bg-dark-700 rounded-lg">
+					<div class="text-xl font-bold text-green-400">{downloadStatus.downloads_remaining}</div>
+					<div class="text-sm text-gray-400">Remaining</div>
+				</div>
+				
+				<!-- Request Credits -->
+				<div class="text-center p-3 bg-dark-700 rounded-lg">
+					<div class="text-xl font-bold text-primary-400 flex items-center justify-center space-x-2">
+						<Gift class="h-5 w-5" />
+						<span>{downloadStatus.request_credits}</span>
+					</div>
+					<div class="text-sm text-gray-400">Request Credits</div>
+					<div class="text-xs text-gray-500">for extra downloads</div>
+				</div>
+				
+				<!-- Next Reset -->
+				<div class="text-center p-3 bg-dark-700 rounded-lg">
+					<div class="text-lg font-bold text-yellow-400">
+						{new Date(downloadStatus.next_reset).toLocaleTimeString('en-US', { 
+							hour: '2-digit', 
+							minute: '2-digit' 
+						})}
+					</div>
+					<div class="text-sm text-gray-400">Next Reset</div>
+					<div class="text-xs text-gray-500">Daily limit resets</div>
+				</div>
+			</div>
+		</div>
+	{/if}
 
 	<!-- Favorites Section -->
 	{#if $isAuthenticated || localFavoritesCount > 0}

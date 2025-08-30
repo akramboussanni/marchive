@@ -10,4 +10,6 @@ type User struct {
 	PasswordResetToken    string `db:"password_reset_token" json:"-"`
 	PasswordResetIssuedAt int64  `db:"password_reset_issuedat" json:"-"`
 	JwtSessionID          int64  `db:"jwt_session_id" json:"-"`
+	RequestCredits        int    `db:"request_credits" safe:"true" json:"request_credits" example:"5"`
+	InviteTokens          int    `db:"invite_tokens" safe:"true" json:"invite_tokens" example:"1"`
 }

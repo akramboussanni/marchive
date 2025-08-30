@@ -16,6 +16,8 @@ type Repos struct {
 	DownloadJob     *DownloadJobRepo
 	SearchCache     *SearchCacheRepo
 	Favorite        *FavoriteRepo
+	RequestCredits  *RequestCreditsRepo
+	Invite          *InviteRepo
 }
 
 type Columns struct {
@@ -37,6 +39,8 @@ func NewRepos(db *sqlx.DB) *Repos {
 		DownloadJob:     NewDownloadJobRepo(db),
 		SearchCache:     NewSearchCacheRepo(db),
 		Favorite:        NewFavoriteRepo(db),
+		RequestCredits:  NewRequestCreditsRepo(db),
+		Invite:          NewInviteRepo(db),
 	}
 }
 

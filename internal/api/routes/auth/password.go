@@ -75,7 +75,7 @@ func (ar *AuthRouter) HandleChangePassword(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if !utils.ComparePassword(user.PasswordHash, req.OldPassword) {
+	if !utils.ComparePassword(user.PasswordHash, req.CurrentPassword) {
 		applog.Warn("Incorrect current password", "userID:", user.ID)
 		api.WriteInvalidCredentials(w)
 		return

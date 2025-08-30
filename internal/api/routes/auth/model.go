@@ -31,6 +31,6 @@ type PasswordResetRequest struct {
 
 // @Description Password change request requiring current password verification
 type PasswordChangeRequest struct {
-	OldPassword string `json:"old_password" example:"SecurePass123!" binding:"required" description:"Current password for verification"`
-	NewPassword string `json:"new_password" example:"NewSecurePass123!" binding:"required" minLength:"8" description:"New password that meets security requirements"`
+	CurrentPassword string `json:"current_password" example:"SecurePass123!" binding:"required" description:"Current password for verification"`
+	NewPassword     string `json:"new_password" example:"NewSecurePass123!" binding:"required" minLength:"8" description:"New password that meets security requirements"`
 }

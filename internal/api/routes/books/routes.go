@@ -15,6 +15,7 @@ type BookRouter struct {
 	DownloadRequestRepo *repo.DownloadRequestRepo
 	SearchCacheRepo     *repo.SearchCacheRepo
 	FavoriteRepo        *repo.FavoriteRepo
+	RequestCreditsRepo  *repo.RequestCreditsRepo
 }
 
 func NewBookRouter(repos *repo.Repos) http.Handler {
@@ -24,6 +25,7 @@ func NewBookRouter(repos *repo.Repos) http.Handler {
 		DownloadRequestRepo: repos.DownloadRequest,
 		SearchCacheRepo:     repos.SearchCache,
 		FavoriteRepo:        repos.Favorite,
+		RequestCreditsRepo:  repos.RequestCredits,
 	}
 	r := chi.NewRouter()
 
@@ -49,6 +51,7 @@ func NewBookRouter(repos *repo.Repos) http.Handler {
 		middleware.AddAuth(r, repos.User, repos.Token)
 		r.Post("/search", br.HandleSearch)
 		r.Get("/downloads", br.HandleUserDownloads)
+		r.Get("/download-status", br.HandleDownloadStatus)
 		r.Get("/favorites", br.HandleGetFavorites)
 		r.Post("/favorite", br.HandleToggleFavorite)
 	})

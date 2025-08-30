@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -343,4 +344,123 @@ func (ar *AdminRouter) HandleInvalidateUserSessions(w http.ResponseWriter, r *ht
 	}
 
 	api.WriteMessage(w, http.StatusOK, "success", "user sessions invalidated")
+}
+
+func (ar *AdminRouter) HandleGrantRequestCredits(w http.ResponseWriter, r *http.Request) {
+	req, err := api.DecodeJSON[RequestCreditsUpdate](w, r)
+	if err != nil {
+		return
+	}
+
+	// Validate amount
+	if req.Amount <= 0 {
+		api.WriteMessage(w, http.StatusBadRequest, "error", "amount must be positive")
+		return
+	}
+
+	// Check if user exists
+	user, err := ar.UserRepo.GetUserByIDSafe(r.Context(), req.UserID)
+	if err != nil {
+		api.WriteMessage(w, http.StatusNotFound, "error", "user not found")
+		return
+	}
+
+	// Get admin user from context
+	adminUser, ok := utils.UserFromContext(r.Context())
+	if !ok {
+		api.WriteInvalidCredentials(w)
+		return
+	}
+
+	// Grant credits
+	err = ar.RequestCreditsRepo.GrantCredits(r.Context(), req.UserID, req.Amount, req.Reason, adminUser.ID)
+	if err != nil {
+		applog.Error("Failed to grant request credits:", err)
+		api.WriteInternalError(w)
+		return
+	}
+
+	// Get updated credits
+	updatedCredits, err := ar.RequestCreditsRepo.GetUserRequestCredits(r.Context(), req.UserID)
+	if err != nil {
+		applog.Error("Failed to get updated credits:", err)
+		api.WriteInternalError(w)
+		return
+	}
+
+	response := RequestCreditsResponse{
+		UserID:         req.UserID,
+		RequestCredits: updatedCredits,
+		Message:        fmt.Sprintf("Successfully granted %d request credits to %s", req.Amount, user.Username),
+	}
+
+	api.WriteJSON(w, http.StatusOK, response)
+}
+
+func (ar *AdminRouter) HandleListUsersWithCredits(w http.ResponseWriter, r *http.Request) {
+	users, err := ar.UserRepo.GetUsersWithStats(r.Context(), 1000, 0) // Get all users
+	if err != nil {
+		applog.Error("Failed to get users:", err)
+		api.WriteInternalError(w)
+		return
+	}
+
+	// Get credits for all users
+	allCredits, err := ar.RequestCreditsRepo.GetAllUsersCredits(r.Context())
+	if err != nil {
+		applog.Error("Failed to get users credits:", err)
+		api.WriteInternalError(w)
+		return
+	}
+
+	// Build response
+	usersWithCredits := make([]UserWithCredits, 0, len(users))
+	for _, user := range users {
+		credits := allCredits[user.ID]
+		usersWithCredits = append(usersWithCredits, UserWithCredits{
+			ID:             user.ID,
+			Username:       user.Username,
+			Role:           user.Role,
+			RequestCredits: credits,
+		})
+	}
+
+	response := UserCreditsListResponse{
+		Users: usersWithCredits,
+	}
+
+	api.WriteJSON(w, http.StatusOK, response)
+}
+
+func (ar *AdminRouter) HandleGetUserCredits(w http.ResponseWriter, r *http.Request) {
+	userIDStr := chi.URLParam(r, "userID")
+	userID, err := strconv.ParseInt(userIDStr, 10, 64)
+	if err != nil {
+		api.WriteMessage(w, http.StatusBadRequest, "error", "invalid user ID")
+		return
+	}
+
+	// Check if user exists
+	user, err := ar.UserRepo.GetUserByIDSafe(r.Context(), userID)
+	if err != nil {
+		api.WriteMessage(w, http.StatusNotFound, "error", "user not found")
+		return
+	}
+
+	// Get user credits
+	credits, err := ar.RequestCreditsRepo.GetUserRequestCredits(r.Context(), userID)
+	if err != nil {
+		applog.Error("Failed to get user credits:", err)
+		api.WriteInternalError(w)
+		return
+	}
+
+	response := UserWithCredits{
+		ID:             user.ID,
+		Username:       user.Username,
+		Role:           user.Role,
+		RequestCredits: credits,
+	}
+
+	api.WriteJSON(w, http.StatusOK, response)
 }

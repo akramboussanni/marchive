@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { Download, Clock, CheckCircle, XCircle, AlertCircle, Loader2, RefreshCw } from 'lucide-svelte';
+	import { Download, Clock, CheckCircle, XCircle, AlertCircle, Loader2, RefreshCw, Gift } from 'lucide-svelte';
 	import { books, type DownloadJob } from '$lib/stores/books';
 	import { auth, isAuthenticated } from '$lib/stores/auth';
 	import { goto } from '$app/navigation';
@@ -15,6 +15,10 @@
 	let totalDownloads = 0;
 	const limit = 20;
 
+	// Download status
+	let downloadStatus: any = null;
+	let statusLoading = false;
+
 	onMount(async () => {
 		if (!$isAuthenticated) {
 			// Try to refresh the token before redirecting to login
@@ -25,7 +29,26 @@
 			}
 		}
 		loadDownloads();
+		loadDownloadStatus();
 	});
+
+	async function loadDownloadStatus() {
+		if (!$isAuthenticated) return;
+		
+		statusLoading = true;
+		try {
+			const response = await fetch('/api/books/download-status', {
+				credentials: 'include'
+			});
+			if (response.ok) {
+				downloadStatus = await response.json();
+			}
+		} catch (error) {
+			console.error('Failed to load download status:', error);
+		} finally {
+			statusLoading = false;
+		}
+	}
 
 	async function loadDownloads() {
 		if (!$isAuthenticated) return;
@@ -190,6 +213,49 @@
 				<span>Refresh</span>
 			</button>
 		</div>
+
+		<!-- Download Status -->
+		{#if downloadStatus && !statusLoading}
+			<div class="mb-8 p-6 bg-dark-800 border border-gray-700 rounded-lg">
+				<h2 class="text-lg font-semibold text-gray-100 mb-4">Download Status</h2>
+				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+					<!-- Daily Downloads -->
+					<div class="text-center p-4 bg-dark-700 rounded-lg">
+						<div class="text-2xl font-bold text-gray-100">{downloadStatus.downloads_used}</div>
+						<div class="text-sm text-gray-400">Used Today</div>
+						<div class="text-xs text-gray-500">of {downloadStatus.daily_limit}</div>
+					</div>
+					
+					<!-- Remaining Downloads -->
+					<div class="text-center p-4 bg-dark-700 rounded-lg">
+						<div class="text-2xl font-bold text-green-400">{downloadStatus.downloads_remaining}</div>
+						<div class="text-sm text-gray-400">Remaining Today</div>
+					</div>
+					
+					<!-- Request Credits -->
+					<div class="text-center p-4 bg-dark-700 rounded-lg">
+						<div class="text-2xl font-bold text-primary-400 flex items-center justify-center space-x-2">
+							<Gift class="h-5 w-5" />
+							<span>{downloadStatus.request_credits}</span>
+						</div>
+						<div class="text-sm text-gray-400">Request Credits</div>
+						<div class="text-xs text-gray-500">for extra downloads</div>
+					</div>
+					
+					<!-- Next Reset -->
+					<div class="text-center p-4 bg-dark-700 rounded-lg">
+						<div class="text-lg font-bold text-yellow-400">
+							{new Date(downloadStatus.next_reset).toLocaleTimeString('en-US', { 
+								hour: '2-digit', 
+								minute: '2-digit' 
+							})}
+						</div>
+						<div class="text-sm text-gray-400">Next Reset</div>
+						<div class="text-xs text-gray-500">Daily limit resets</div>
+					</div>
+				</div>
+			</div>
+		{/if}
 
 		<!-- Downloads List -->
 		{#if isLoading}

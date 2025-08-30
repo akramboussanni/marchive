@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { BarChart3, Users, BookOpen, Download, Activity, TrendingUp } from 'lucide-svelte';
+	import { BarChart3, Users, BookOpen, Download, Activity, TrendingUp, Gift } from 'lucide-svelte';
 	import { isAuthenticated, isAdmin } from '$lib/stores/auth';
 	import { admin, systemStats, type SystemStats } from '$lib/stores/admin';
 
@@ -77,15 +77,27 @@
 
 	<!-- Quick Actions -->
 	<div class="mb-8">
-		<a href="/admin/users" class="card p-6 hover:bg-dark-800 transition-colors inline-block">
-			<div class="flex items-center space-x-3">
-				<Users class="h-8 w-8 text-primary-500" />
-				<div>
-					<h3 class="font-medium text-gray-100">Manage Users</h3>
-					<p class="text-sm text-gray-400">View and edit user accounts</p>
+		<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+			<a href="/admin/users" class="card p-6 hover:bg-dark-800 transition-colors inline-block">
+				<div class="flex items-center space-x-3">
+					<Users class="h-8 w-8 text-primary-500" />
+					<div>
+						<h3 class="font-medium text-gray-100">Manage Users</h3>
+						<p class="text-sm text-gray-400">View and edit user accounts</p>
+					</div>
 				</div>
-			</div>
-		</a>
+			</a>
+			
+			<a href="/admin/credits" class="card p-6 hover:bg-dark-800 transition-colors inline-block">
+				<div class="flex items-center space-x-3">
+					<Gift class="h-8 w-8 text-primary-500" />
+					<div>
+						<h3 class="font-medium text-gray-100">Request Credits</h3>
+						<p class="text-sm text-gray-400">Manage user request credits</p>
+					</div>
+				</div>
+			</a>
+		</div>
 	</div>
 
 	{#if loading}

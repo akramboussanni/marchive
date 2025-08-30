@@ -114,7 +114,7 @@ func (ds *DownloadService) processJob(ctx context.Context, job *model.DownloadJo
 		ds.repos.DownloadJob.UpdateJobStatus(ctx, job.ID, model.DownloadStatusFailed, 0, err.Error())
 		return
 	}
-	
+
 	ds.repos.DownloadJob.UpdateJobStatus(ctx, job.ID, model.DownloadStatusCompleted, 100, "")
 	log.Printf("Download job %d completed successfully", job.ID)
 }

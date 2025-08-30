@@ -8,7 +8,7 @@
 	import { auth, isAuthenticated } from '$lib/stores/auth';
 
 	onMount(async () => {
-		// Check authentication status on app load with automatic refresh capability
+		// Check authentication status on app load
 		await auth.checkAuth();
 	});
 
@@ -18,7 +18,7 @@
 	// Define public routes that don't require authentication
 	const publicRoutes = ['/', '/login'];
 	
-	// Handle authentication state changes - only redirect from protected routes
+	// Handle authentication state changes
 	$: if (!$isAuthenticated && !publicRoutes.includes($page.url.pathname)) {
 		// User is on a protected page but not authenticated
 		// Try to refresh the token automatically

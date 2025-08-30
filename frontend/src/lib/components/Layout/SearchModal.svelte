@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount } from 'svelte';
-	import { Search, X, Download, Loader2, ChevronLeft, ChevronRight, Lock, CheckCircle } from 'lucide-svelte';
+	import { Search, X, Download, Loader2, ChevronLeft, ChevronRight, Lock, CheckCircle, Gift } from 'lucide-svelte';
 	import { books, isSearching, type Book, type SearchResponse } from '$lib/stores/books';
 	import { isAuthenticated } from '$lib/stores/auth';
 	import { showError, showSuccess } from '$lib/stores/notifications';
@@ -17,11 +17,36 @@
 	let currentPage = 0;
 	let searchLimit = 20;
 
+	// Download status
+	let downloadStatus: any = null;
+	let statusLoading = false;
+
 	onMount(() => {
 		if (query) {
 			performSearch();
 		}
+		if ($isAuthenticated) {
+			loadDownloadStatus();
+		}
 	});
+
+	async function loadDownloadStatus() {
+		if (!$isAuthenticated) return;
+		
+		statusLoading = true;
+		try {
+			const response = await fetch('/api/books/download-status', {
+				credentials: 'include'
+			});
+			if (response.ok) {
+				downloadStatus = await response.json();
+			}
+		} catch (error) {
+			console.error('Failed to load download status:', error);
+		} finally {
+			statusLoading = false;
+		}
+	}
 
 	function handleClose() {
 		dispatch('close');
@@ -97,11 +122,20 @@
 			} else {
 				await books.requestDownload(book.hash, book.title);
 			}
-			showSuccess('Download Started', `"${book.title}" has been added to your downloads. Check your downloads page for progress.`);
+			
+			// Check if credits were used
+			if (downloadStatus && downloadStatus.downloads_remaining === 0 && downloadStatus.request_credits > 0) {
+				showSuccess('Download Started (Credit Used)', `"${book.title}" has been added to your downloads using 1 request credit. You have ${downloadStatus.request_credits - 1} credits remaining.`);
+			} else {
+				showSuccess('Download Started', `"${book.title}" has been added to your downloads. Check your downloads page for progress.`);
+			}
 			
 			// Refresh the explore page to update availability status
 			// Dispatch an event to notify the parent component to refresh
 			dispatch('downloadRequested', { bookHash: book.hash });
+			
+			// Refresh download status to show updated credits
+			await loadDownloadStatus();
 		} catch (error) {
 			console.error('Download failed:', error);
 			const errorMessage = (error as Error).message || 'Unknown error';
@@ -109,7 +143,11 @@
 			if (errorMessage.includes('already requested')) {
 				showError('Already Requested', `You have already requested "${book.title}". Check your downloads page.`);
 			} else if (errorMessage.includes('daily download limit')) {
-				showError('Download Limit Reached', 'You have reached your daily download limit. Try again tomorrow.');
+				if (downloadStatus && downloadStatus.request_credits > 0) {
+					showError('Daily Limit Reached', `You've reached your daily limit of ${downloadStatus.daily_limit} downloads. You have ${downloadStatus.request_credits} request credits available for additional downloads.`);
+				} else {
+					showError('Daily Limit Reached', `You've reached your daily limit of ${downloadStatus?.daily_limit || 10} downloads. Contact an admin to request additional credits.`);
+				}
 			} else if (errorMessage.includes('available for download')) {
 				showSuccess('Book Ready', `"${book.title}" is already available in your downloads!`);
 			} else {
@@ -165,6 +203,53 @@
 				</button>
 			</div>
 		</div>
+
+		<!-- Download Status -->
+		{#if $isAuthenticated && downloadStatus && !statusLoading}
+			<div class="border-b border-gray-800 p-4 bg-dark-800/50">
+				<div class="flex items-center justify-between mb-3">
+					<h3 class="text-sm font-medium text-gray-300">Your Download Status</h3>
+					<div class="text-xs text-gray-500">
+						Daily limit: {downloadStatus.daily_limit} • Credits allow extra downloads
+					</div>
+				</div>
+				<div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+					<!-- Daily Downloads -->
+					<div class="text-center p-2 bg-dark-700 rounded-lg">
+						<div class="text-lg font-bold text-gray-100">{downloadStatus.downloads_used}</div>
+						<div class="text-xs text-gray-400">Used Today</div>
+						<div class="text-xs text-gray-500">of {downloadStatus.daily_limit}</div>
+					</div>
+					
+					<!-- Remaining Downloads -->
+					<div class="text-center p-2 bg-dark-700 rounded-lg">
+						<div class="text-lg font-bold text-green-400">{downloadStatus.downloads_remaining}</div>
+						<div class="text-xs text-gray-400">Remaining</div>
+					</div>
+					
+					<!-- Request Credits -->
+					<div class="text-center p-2 bg-dark-700 rounded-lg">
+						<div class="text-lg font-bold text-primary-400 flex items-center justify-center space-x-1">
+							<Gift class="h-4 w-4" />
+							<span>{downloadStatus.request_credits}</span>
+						</div>
+						<div class="text-xs text-gray-400">Credits</div>
+						<div class="text-xs text-gray-500">for extra</div>
+					</div>
+					
+					<!-- Next Reset -->
+					<div class="text-center p-2 bg-dark-700 rounded-lg">
+						<div class="text-sm font-bold text-yellow-400">
+							{new Date(downloadStatus.next_reset).toLocaleTimeString('en-US', { 
+								hour: '2-digit', 
+								minute: '2-digit' 
+							})}
+						</div>
+						<div class="text-xs text-gray-400">Next Reset</div>
+					</div>
+				</div>
+			</div>
+		{/if}
 
 		<!-- Results -->
 		<div class="p-3 sm:p-4 max-h-[60vh] overflow-y-auto">
@@ -227,6 +312,18 @@
 													<span>Download</span>
 												{/if}
 											</button>
+											
+											<!-- Credit Usage Info -->
+											{#if downloadStatus && downloadStatus.downloads_remaining === 0 && downloadStatus.request_credits > 0}
+												<div class="mt-2 text-xs text-primary-400 flex items-center space-x-1">
+													<Gift class="h-3 w-3" />
+													<span>Will use 1 request credit</span>
+												</div>
+											{:else if downloadStatus && downloadStatus.downloads_remaining === 0 && downloadStatus.request_credits === 0}
+												<div class="mt-2 text-xs text-red-400">
+													Daily limit reached. No credits available.
+												</div>
+											{/if}
 										{/if}
 									</div>
 								</div>

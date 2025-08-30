@@ -23,6 +23,30 @@ func (h *DownloadRequestHelper) CheckAndCreateDownload(ctx context.Context, user
 		return false, fmt.Errorf("failed to check and create download: %w", err)
 	}
 
+	// If daily limit reached, check if user has request credits
+	if !canDownload {
+		credits, err := h.repos.RequestCredits.GetUserRequestCredits(ctx, userID)
+		if err != nil {
+			return false, fmt.Errorf("failed to check request credits: %w", err)
+		}
+
+		if credits > 0 {
+			// User has credits, use one credit for this request
+			err = h.repos.RequestCredits.UseCredits(ctx, userID, 1)
+			if err != nil {
+				return false, fmt.Errorf("failed to use request credit: %w", err)
+			}
+
+			// Create the download request
+			err = h.repos.DownloadRequest.CreateDownloadRequest(ctx, userID, md5, title)
+			if err != nil {
+				return false, fmt.Errorf("failed to create download request: %w", err)
+			}
+
+			return true, nil
+		}
+	}
+
 	return canDownload, nil
 }
 
@@ -42,6 +66,12 @@ func (h *DownloadRequestHelper) GetDownloadStatus(ctx context.Context, userID in
 		return nil, err
 	}
 
+	// Get request credits
+	requestCredits, err := h.repos.RequestCredits.GetUserRequestCredits(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
 	nextReset := utils.GetNextUTCMidnight()
 	timeUntilReset := utils.GetTimeUntilNextUTCMidnight()
 
@@ -50,6 +80,7 @@ func (h *DownloadRequestHelper) GetDownloadStatus(ctx context.Context, userID in
 		"downloads_used":      count,
 		"downloads_remaining": remaining,
 		"daily_limit":         10,
+		"request_credits":     requestCredits,
 		"next_reset":          nextReset.Format(time.RFC3339),
 		"time_until_reset":    timeUntilReset.String(),
 	}, nil

@@ -12,6 +12,7 @@ import (
 	"github.com/akramboussanni/marchive/internal/api"
 	"github.com/akramboussanni/marchive/internal/applog"
 	"github.com/akramboussanni/marchive/internal/model"
+	"github.com/akramboussanni/marchive/internal/repo"
 	"github.com/akramboussanni/marchive/internal/utils"
 	"github.com/go-chi/chi/v5"
 )
@@ -616,4 +617,28 @@ func (br *BookRouter) HandleGetFavorites(w http.ResponseWriter, r *http.Request)
 	}
 
 	api.WriteJSON(w, http.StatusOK, response)
+}
+
+func (br *BookRouter) HandleDownloadStatus(w http.ResponseWriter, r *http.Request) {
+	user, ok := utils.UserFromContext(r.Context())
+	if !ok {
+		api.WriteInvalidCredentials(w)
+		return
+	}
+
+	// Create download helper to get status
+	helper := repo.NewDownloadRequestHelper(&repo.Repos{
+		DownloadRequest: br.DownloadRequestRepo,
+		RequestCredits:  br.RequestCreditsRepo,
+	})
+
+	// Get download status using the helper
+	status, err := helper.GetDownloadStatus(r.Context(), user.ID)
+	if err != nil {
+		applog.Error("Failed to get download status:", err)
+		api.WriteInternalError(w)
+		return
+	}
+
+	api.WriteJSON(w, http.StatusOK, status)
 }

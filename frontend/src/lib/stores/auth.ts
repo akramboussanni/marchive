@@ -17,11 +17,16 @@ export const isAdmin = writable(false);
 export const auth = {
 	async login(username: string, password: string): Promise<boolean> {
 		try {
+			console.log('Attempting login...');
 			const response = await api.post('/auth/login', { username, password });
 			if (response.ok) {
+				console.log('Login successful, checking auth...');
+				// Reset failed refresh count on successful login
+				api.resetFailedRefreshCount();
 				await this.checkAuth();
 				return true;
 			}
+			console.log('Login failed:', response.status);
 			return false;
 		} catch (error) {
 			console.error('Login error:', error);
@@ -31,10 +36,12 @@ export const auth = {
 
 	async logout(): Promise<void> {
 		try {
+			console.log('Logging out...');
 			await api.post('/auth/logout', {});
 		} catch (error) {
 			console.error('Logout error:', error);
 		} finally {
+			console.log('Clearing auth state...');
 			user.set(null);
 			isAuthenticated.set(false);
 			isAdmin.set(false);
@@ -44,24 +51,27 @@ export const auth = {
 
 	async checkAuth(retryCount = 0): Promise<void> {
 		try {
+			console.log('Checking authentication...');
 			const response = await api.get('/auth/me');
 			if (response.ok) {
 				const userData = await response.json();
+				console.log('Auth check successful:', userData.username);
 				user.set(userData);
 				isAuthenticated.set(true);
 				isAdmin.set(userData.role === 'admin');
+				return;
 			} else if (response.status === 401) {
+				console.log('Auth check failed (401), attempting token refresh...');
 				// Unauthorized - try to refresh the token first
-				const refreshSuccess = await this.checkAuthWithRefresh();
+				const refreshSuccess = await this.refreshToken();
 				if (refreshSuccess) {
 					// Token refreshed successfully, we're now authenticated
 					return;
 				}
 				
 				// Refresh failed - clear auth state
-				user.set(null);
-				isAuthenticated.set(false);
-				isAdmin.set(false);
+				console.log('Token refresh failed, clearing auth state...');
+				this.clearAuthState();
 			} else {
 				// Other errors - retry up to 2 times
 				if (retryCount < 2) {
@@ -71,9 +81,8 @@ export const auth = {
 				}
 				
 				// Max retries reached
-				user.set(null);
-				isAuthenticated.set(false);
-				isAdmin.set(false);
+				console.log('Max auth check retries reached');
+				this.clearAuthState();
 				showWarning('Connection Issue', 'Unable to verify authentication status. Please refresh the page.');
 			}
 		} catch (error) {
@@ -87,62 +96,48 @@ export const auth = {
 			}
 			
 			// Max retries reached
-			user.set(null);
-			isAuthenticated.set(false);
-			isAdmin.set(false);
+			console.log('Max auth check retries reached');
+			this.clearAuthState();
 			showError('Connection Error', 'Unable to connect to the server. Please check your internet connection.');
 		}
 	},
 
-	async checkAuthWithRefresh(): Promise<boolean> {
+	async refreshToken(): Promise<boolean> {
 		try {
-			const response = await api.get('/auth/me');
+			console.log('Refreshing token...');
+			const response = await api.post('/auth/refresh', {});
 			if (response.ok) {
-				const userData = await response.json();
-				user.set(userData);
-				isAuthenticated.set(true);
-				isAdmin.set(userData.role === 'admin');
-				return true;
-			} else if (response.status === 401) {
-				// Try to refresh the token
-				const refreshResponse = await api.post('/auth/refresh', {});
-				if (refreshResponse.ok) {
-					// Token refreshed, try /me again
-					const retryResponse = await api.get('/auth/me');
-					if (retryResponse.ok) {
-						const userData = await retryResponse.json();
-						user.set(userData);
-						isAuthenticated.set(true);
-						isAdmin.set(userData.role === 'admin');
-						return true;
-					} else if (retryResponse.status === 401) {
-						// Still unauthorized after refresh - clear auth state
-						user.set(null);
-						isAuthenticated.set(false);
-						isAdmin.set(false);
-						return false;
-					}
+				console.log('Token refresh successful, verifying...');
+				// Token refreshed, verify by calling /me
+				const meResponse = await api.get('/auth/me');
+				if (meResponse.ok) {
+					const userData = await meResponse.json();
+					console.log('Token verification successful:', userData.username);
+					user.set(userData);
+					isAuthenticated.set(true);
+					isAdmin.set(userData.role === 'admin');
+					// Reset failed refresh count on successful refresh
+					api.resetFailedRefreshCount();
+					return true;
 				}
-				
-				// Refresh failed or /me still fails after refresh
-				user.set(null);
-				isAuthenticated.set(false);
-				isAdmin.set(false);
-				return false;
 			}
 			
-			// Other errors
-			user.set(null);
-			isAuthenticated.set(false);
-			isAdmin.set(false);
+			// Refresh failed
+			console.log('Token refresh failed');
+			this.clearAuthState();
 			return false;
 		} catch (error) {
-			console.error('Auth check with refresh error:', error);
-			user.set(null);
-			isAuthenticated.set(false);
-			isAdmin.set(false);
+			console.error('Token refresh error:', error);
+			this.clearAuthState();
 			return false;
 		}
+	},
+
+	clearAuthState(): void {
+		console.log('Clearing authentication state...');
+		user.set(null);
+		isAuthenticated.set(false);
+		isAdmin.set(false);
 	},
 
 	async changePassword(currentPassword: string, newPassword: string): Promise<boolean> {
@@ -160,10 +155,12 @@ export const auth = {
 
 	async logoutEverywhere(): Promise<void> {
 		try {
+			console.log('Logging out everywhere...');
 			await api.post('/auth/logout-all', {});
 		} catch (error) {
 			console.error('Logout everywhere error:', error);
 		} finally {
+			console.log('Clearing auth state...');
 			user.set(null);
 			isAuthenticated.set(false);
 			isAdmin.set(false);
@@ -179,9 +176,11 @@ export const auth = {
 			return await requestFn();
 		} catch (error: any) {
 			if (error?.status === 401) {
+				console.log('Request failed with 401, attempting token refresh...');
 				// Try to refresh the token
-				const refreshSuccess = await this.checkAuthWithRefresh();
+				const refreshSuccess = await this.refreshToken();
 				if (refreshSuccess) {
+					console.log('Token refreshed, retrying request...');
 					// Retry the request
 					try {
 						return await requestFn();
@@ -190,6 +189,7 @@ export const auth = {
 						return null;
 					}
 				} else {
+					console.log('Token refresh failed, calling failure handler...');
 					// Refresh failed, call the failure handler
 					onAuthFailure?.();
 					return null;
@@ -200,8 +200,9 @@ export const auth = {
 	},
 
 	async handleUnauthorized(): Promise<boolean> {
+		console.log('Handling unauthorized request...');
 		// This method can be called when any API request returns 401
 		// It will attempt to refresh the token and return true if successful
-		return await this.checkAuthWithRefresh();
+		return await this.refreshToken();
 	}
 };

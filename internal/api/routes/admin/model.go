@@ -53,3 +53,26 @@ type UserSearchRequest struct {
 	Limit  int    `json:"limit,omitempty" example:"20"`
 	Offset int    `json:"offset,omitempty" example:"0"`
 }
+
+type RequestCreditsUpdate struct {
+	UserID int64  `json:"user_id" binding:"required" example:"123456789"`
+	Amount int    `json:"amount" binding:"required" example:"5"`
+	Reason string `json:"reason" example:"Bonus for active user"`
+}
+
+type RequestCreditsResponse struct {
+	UserID         int64  `json:"user_id" example:"123456789"`
+	RequestCredits int    `json:"request_credits" example:"5"`
+	Message        string `json:"message" example:"Credits updated successfully"`
+}
+
+type UserCreditsListResponse struct {
+	Users []UserWithCredits `json:"users"`
+}
+
+type UserWithCredits struct {
+	ID             int64  `json:"id,string" example:"123456789"`
+	Username       string `json:"username" example:"johndoe"`
+	Role           string `json:"role" example:"user"`
+	RequestCredits int    `json:"request_credits" example:"5"`
+}

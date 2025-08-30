@@ -10,13 +10,19 @@ import (
 )
 
 type AuthRouter struct {
-	UserRepo    *repo.UserRepo
-	TokenRepo   *repo.TokenRepo
-	LockoutRepo *repo.LockoutRepo
+	UserRepo           *repo.UserRepo
+	TokenRepo          *repo.TokenRepo
+	LockoutRepo        *repo.LockoutRepo
+	RequestCreditsRepo *repo.RequestCreditsRepo
 }
 
-func NewAuthRouter(userRepo *repo.UserRepo, tokenRepo *repo.TokenRepo, lockoutRepo *repo.LockoutRepo) http.Handler {
-	ar := &AuthRouter{UserRepo: userRepo, TokenRepo: tokenRepo, LockoutRepo: lockoutRepo}
+func NewAuthRouter(userRepo *repo.UserRepo, tokenRepo *repo.TokenRepo, lockoutRepo *repo.LockoutRepo, requestCreditsRepo *repo.RequestCreditsRepo) http.Handler {
+	ar := &AuthRouter{
+		UserRepo:           userRepo,
+		TokenRepo:          tokenRepo,
+		LockoutRepo:        lockoutRepo,
+		RequestCreditsRepo: requestCreditsRepo,
+	}
 	r := chi.NewRouter()
 
 	r.Use(middleware.MaxBytesMiddleware(1 << 20))
@@ -43,6 +49,7 @@ func NewAuthRouter(userRepo *repo.UserRepo, tokenRepo *repo.TokenRepo, lockoutRe
 		middleware.AddRatelimit(r, 30, 1*time.Minute)
 		middleware.AddAuth(r, ar.UserRepo, ar.TokenRepo)
 		r.Get("/me", ar.HandleProfile)
+		r.Get("/me/credits", ar.HandleGetMyCredits)
 	})
 
 	//15/min
