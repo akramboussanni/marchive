@@ -54,7 +54,7 @@ RUN addgroup -g 1001 -S appgroup && \
 WORKDIR /app
 
 # Copy Go binary from backend stage
-COPY --from=backend-builder /app/backend/main ./
+COPY --from=backend-builder /app/main ./
 
 # Copy built frontend from frontend stage
 COPY --from=frontend-builder /app/frontend/build ./frontend/build
