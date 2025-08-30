@@ -3,6 +3,9 @@ export default {
 	content: ['./src/**/*.{html,js,svelte,ts}'],
 	darkMode: 'class',
 	theme: {
+		screens: {
+			'xs': '475px',
+		},
 		extend: {
 			colors: {
 				'primary': {

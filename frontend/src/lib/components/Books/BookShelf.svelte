@@ -121,8 +121,8 @@
 
 	<!-- Favorites Section -->
 	{#if $isAuthenticated || localFavoritesCount > 0}
-		<div class="bg-dark-800/50 rounded-lg p-6 border border-gray-700">
-			<div class="flex items-center justify-between mb-4">
+		<div class="bg-dark-800/50 rounded-lg p-4 sm:p-6 border border-gray-700">
+			<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-3 sm:space-y-0">
 				<div class="flex items-center space-x-2">
 					<Heart class="h-6 w-6 text-red-400" />
 					<h2 class="text-xl font-semibold text-gray-100">
@@ -143,7 +143,7 @@
 					<button
 						on:click={loadFavorites}
 						disabled={$isFavoritesLoading}
-						class="btn-secondary flex items-center space-x-2"
+						class="btn-secondary flex items-center justify-center sm:justify-start space-x-2 w-full sm:w-auto"
 					>
 						<RefreshCw class="h-4 w-4 {$isFavoritesLoading ? 'animate-spin' : ''}" />
 						<span>Refresh</span>
@@ -179,7 +179,7 @@
 					<div class="flex justify-center">
 						<button
 							on:click={loadMoreFavorites}
-							class="btn-secondary flex items-center space-x-2"
+							class="btn-secondary flex items-center justify-center space-x-2 w-full sm:w-auto max-w-xs"
 						>
 							<Loader2 class="h-4 w-4" />
 							<span>Load More Favorites</span>
@@ -209,7 +209,7 @@
 	{/if}
 
 	<!-- Header -->
-	<div class="flex items-center justify-between">
+	<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
 		<div>
 			<h1 class="text-2xl font-bold text-gray-100">{title}</h1>
 			{#if $exploredBooks}
@@ -222,7 +222,7 @@
 		<button
 			on:click={loadBooks}
 			disabled={loading}
-			class="btn-secondary flex items-center space-x-2"
+			class="btn-secondary flex items-center justify-center sm:justify-start space-x-2 w-full sm:w-auto"
 		>
 			<RefreshCw class="h-4 w-4 {loading ? 'animate-spin' : ''}" />
 			<span>Refresh</span>
@@ -250,7 +250,7 @@
 				<button
 					on:click={loadMoreBooks}
 					disabled={loadingMore}
-					class="btn-secondary flex items-center space-x-2"
+					class="btn-secondary flex items-center justify-center space-x-2 w-full sm:w-auto max-w-xs"
 				>
 					{#if loadingMore}
 						<Loader2 class="h-4 w-4 animate-spin" />

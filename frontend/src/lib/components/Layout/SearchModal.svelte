@@ -126,14 +126,14 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div
-	class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-start justify-center pt-16"
+	class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-start justify-center pt-4 sm:pt-16 px-2 sm:px-0"
 	on:click={handleClose}
 >
 	<!-- Modal Content -->
 	<!-- svelte-ignore a11y-click-events-have-key-events -->
 	<!-- svelte-ignore a11y-no-static-element-interactions -->
 	<div
-		class="bg-dark-900 rounded-xl border border-gray-800 w-full max-w-4xl mx-4 max-h-[80vh] overflow-hidden"
+		class="bg-dark-900 rounded-xl border border-gray-800 w-full max-w-4xl mx-auto max-h-[90vh] sm:max-h-[80vh] overflow-hidden"
 		on:click|stopPropagation
 	>
 		<!-- Header -->
@@ -157,14 +157,14 @@
 		</div>
 
 		<!-- Results -->
-		<div class="p-4 max-h-[60vh] overflow-y-auto">
+		<div class="p-3 sm:p-4 max-h-[60vh] overflow-y-auto">
 			{#if $isSearching}
-				<div class="flex items-center justify-center py-12">
-					<Loader2 class="h-8 w-8 animate-spin text-primary-500" />
-					<span class="ml-3 text-gray-400">Searching...</span>
+				<div class="flex items-center justify-center py-8 sm:py-12">
+					<Loader2 class="h-6 w-6 sm:h-8 sm:w-8 animate-spin text-primary-500" />
+					<span class="ml-3 text-gray-400 text-sm sm:text-base">Searching...</span>
 				</div>
 			{:else if searchResults.length > 0}
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+				<div class="grid grid-cols-1 gap-3 sm:gap-4">
 					{#each searchResults as book, index}
 						<div class="card p-4 hover:bg-dark-800 transition-all duration-200">
 							<div class="flex space-x-4">
@@ -216,18 +216,18 @@
 
 				<!-- Pagination Controls -->
 				{#if currentSearchResponse && currentSearchResponse.total > searchLimit}
-					<div class="flex items-center justify-between mt-6 pt-4 border-t border-dark-700">
-						<div class="text-sm text-gray-400">
+					<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-6 pt-4 border-t border-dark-700 space-y-3 sm:space-y-0">
+						<div class="text-sm text-gray-400 text-center sm:text-left">
 							Showing {currentPage * searchLimit + 1}-{Math.min((currentPage + 1) * searchLimit, currentSearchResponse.total)} of {currentSearchResponse.total} results
 						</div>
-						<div class="flex items-center space-x-2">
+						<div class="flex items-center justify-center space-x-2">
 							<button
 								on:click={handlePrevPage}
 								disabled={currentPage === 0 || $isSearching}
 								class="btn-secondary-sm flex items-center space-x-1 disabled:opacity-50 disabled:cursor-not-allowed"
 							>
 								<ChevronLeft class="h-4 w-4" />
-								<span>Previous</span>
+								<span class="hidden sm:inline">Previous</span>
 							</button>
 							<span class="px-3 py-1 text-sm text-gray-400">
 								Page {currentPage + 1} of {Math.ceil(currentSearchResponse.total / searchLimit)}
@@ -237,7 +237,7 @@
 								disabled={!currentSearchResponse.pagination.has_next || $isSearching}
 								class="btn-secondary-sm flex items-center space-x-1 disabled:opacity-50 disabled:cursor-not-allowed"
 							>
-								<span>Next</span>
+								<span class="hidden sm:inline">Next</span>
 								<ChevronRight class="h-4 w-4" />
 							</button>
 						</div>

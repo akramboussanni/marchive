@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { Search, BookOpen, Settings, LogOut, User, Download, Lock } from 'lucide-svelte';
+	import { Search, BookOpen, Settings, LogOut, User, Download, Lock, Menu, X } from 'lucide-svelte';
 	import { auth, user, isAuthenticated, isAdmin } from '$lib/stores/auth';
 	import { books } from '$lib/stores/books';
 	import SearchModal from './SearchModal.svelte';
@@ -9,6 +9,7 @@
 	let searchQuery = '';
 	let showSearchModal = false;
 	let showUserMenu = false;
+	let showMobileMenu = false;
 
 	async function handleSearch() {
 		if (searchQuery.trim()) {
@@ -40,12 +41,12 @@
 			<div class="flex items-center">
 				<a href="/" class="flex items-center space-x-2">
 					<BookOpen class="h-8 w-8 text-primary-500" />
-					<span class="text-xl font-bold text-gray-100">marchive</span>
+					<span class="text-xl font-bold text-gray-100 hidden sm:inline">marchive</span>
 				</a>
 			</div>
 
-			<!-- Search Bar -->
-			<div class="flex-1 max-w-2xl mx-8">
+			<!-- Search Bar - Hidden on mobile, shown on larger screens -->
+			<div class="hidden md:flex flex-1 max-w-2xl mx-8">
 				<div class="relative">
 					<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
 						{#if $isAuthenticated}
@@ -81,8 +82,20 @@
 				</div>
 			</div>
 
-			<!-- Navigation -->
-			<div class="flex items-center space-x-4">
+			<!-- Mobile Search Button -->
+			<div class="md:hidden">
+				<button
+					on:click={() => showSearchModal = true}
+					class="btn-ghost p-2"
+					disabled={!$isAuthenticated}
+					class:opacity-50={!$isAuthenticated}
+				>
+					<Search class="h-5 w-5" />
+				</button>
+			</div>
+
+			<!-- Desktop Navigation - Hidden on mobile -->
+			<div class="hidden md:flex items-center space-x-4">
 				{#if $isAuthenticated}
 					<!-- Downloads -->
 					<a
@@ -139,7 +152,111 @@
 					<a href="/login" class="btn-primary">Sign In</a>
 				{/if}
 			</div>
+
+			<!-- Mobile Menu Button -->
+			<div class="md:hidden">
+				<button
+					on:click={() => showMobileMenu = !showMobileMenu}
+					class="btn-ghost p-2"
+				>
+					{#if showMobileMenu}
+						<X class="h-5 w-5" />
+					{:else}
+						<Menu class="h-5 w-5" />
+					{/if}
+				</button>
+			</div>
 		</div>
+
+		<!-- Mobile Menu -->
+		{#if showMobileMenu}
+			<div class="md:hidden border-t border-gray-800 bg-dark-900/95 backdrop-blur-sm">
+				<div class="px-2 pt-2 pb-3 space-y-1">
+					{#if $isAuthenticated}
+						<!-- Mobile Search Bar -->
+						<div class="px-3 py-2">
+							<div class="relative">
+								<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+									{#if $isAuthenticated}
+										<Search class="h-5 w-5 text-gray-400" />
+									{:else}
+										<Lock class="h-5 w-5 text-gray-500" />
+									{/if}
+								</div>
+								<input
+									type="text"
+									bind:value={searchQuery}
+									on:keydown={handleKeydown}
+									placeholder={$isAuthenticated ? "Search books..." : "Sign in to search books"}
+									class="block w-full pl-10 pr-3 py-2 bg-dark-800 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+									class:opacity-50={!$isAuthenticated}
+									disabled={!$isAuthenticated}
+								/>
+							</div>
+						</div>
+
+						<!-- Mobile Navigation Links -->
+						<a
+							href="/downloads"
+							class="block px-3 py-2 text-base font-medium text-gray-300 hover:bg-dark-800 hover:text-white rounded-md transition-colors"
+							class:bg-dark-800={$page.url.pathname === '/downloads'}
+							on:click={() => showMobileMenu = false}
+						>
+							<div class="flex items-center space-x-3">
+								<Download class="h-5 w-5" />
+								<span>Downloads</span>
+							</div>
+						</a>
+
+						{#if $isAdmin}
+							<a
+								href="/admin"
+								class="block px-3 py-2 text-base font-medium text-gray-300 hover:bg-dark-800 hover:text-white rounded-md transition-colors"
+								class:bg-dark-800={$page.url.pathname.startsWith('/admin')}
+								on:click={() => showMobileMenu = false}
+							>
+								<div class="flex items-center space-x-3">
+									<Settings class="h-5 w-5" />
+									<span>Admin</span>
+								</div>
+							</a>
+						{/if}
+
+						<a
+							href="/profile"
+							class="block px-3 py-2 text-base font-medium text-gray-300 hover:bg-dark-800 hover:text-white rounded-md transition-colors"
+							on:click={() => showMobileMenu = false}
+						>
+							<div class="flex items-center space-x-3">
+								<User class="h-5 w-5" />
+								<span>Profile Settings</span>
+							</div>
+						</a>
+
+						<button
+							on:click={() => { handleLogout(); showMobileMenu = false; }}
+							class="w-full text-left block px-3 py-2 text-base font-medium text-gray-300 hover:bg-dark-800 hover:text-white rounded-md transition-colors"
+						>
+							<div class="flex items-center space-x-3">
+								<LogOut class="h-5 w-5" />
+								<span>Sign Out</span>
+							</div>
+						</button>
+					{:else}
+						<a
+							href="/login"
+							class="block px-3 py-2 text-base font-medium text-gray-300 hover:bg-dark-800 hover:text-white rounded-md transition-colors"
+							on:click={() => showMobileMenu = false}
+						>
+							<div class="flex items-center space-x-3">
+								<User class="h-5 w-5" />
+								<span>Sign In</span>
+							</div>
+						</a>
+					{/if}
+				</div>
+			</div>
+		{/if}
 	</div>
 </nav>
 

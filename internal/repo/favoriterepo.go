@@ -22,7 +22,7 @@ func (fr *FavoriteRepo) AddFavorite(ctx context.Context, userID int64, bookHash 
 
 	query := `
 		INSERT INTO favorites (id, user_id, book_hash, created_at)
-		VALUES (?, ?, ?, ?)
+		VALUES ($1, $2, $3, $4)
 	`
 
 	id := utils.GenerateSnowflakeID()
@@ -33,7 +33,7 @@ func (fr *FavoriteRepo) AddFavorite(ctx context.Context, userID int64, bookHash 
 func (fr *FavoriteRepo) RemoveFavorite(ctx context.Context, userID int64, bookHash string) error {
 	query := `
 		DELETE FROM favorites 
-		WHERE user_id = ? AND book_hash = ?
+		WHERE user_id = $1 AND book_hash = $2
 	`
 
 	_, err := fr.db.ExecContext(ctx, query, userID, bookHash)
@@ -43,7 +43,7 @@ func (fr *FavoriteRepo) RemoveFavorite(ctx context.Context, userID int64, bookHa
 func (fr *FavoriteRepo) IsFavorited(ctx context.Context, userID int64, bookHash string) (bool, error) {
 	query := `
 		SELECT COUNT(*) FROM favorites 
-		WHERE user_id = ? AND book_hash = ?
+		WHERE user_id = $1 AND book_hash = $2
 	`
 
 	var count int
@@ -59,10 +59,9 @@ func (fr *FavoriteRepo) GetUserFavorites(ctx context.Context, userID int64, limi
 	query := `
 		SELECT f.id, f.user_id, f.book_hash, f.created_at
 		FROM favorites f
-		JOIN savedbooks b ON f.book_hash = b.hash
-		WHERE f.user_id = ?
+		WHERE f.user_id = $1
 		ORDER BY f.created_at DESC
-		LIMIT ? OFFSET ?
+		LIMIT $2 OFFSET $3
 	`
 
 	rows, err := fr.db.QueryContext(ctx, query, userID, limit, offset)
@@ -87,7 +86,7 @@ func (fr *FavoriteRepo) GetUserFavorites(ctx context.Context, userID int64, limi
 func (fr *FavoriteRepo) CountUserFavorites(ctx context.Context, userID int64) (int, error) {
 	query := `
 		SELECT COUNT(*) FROM favorites 
-		WHERE user_id = ?
+		WHERE user_id = $1
 	`
 
 	var count int

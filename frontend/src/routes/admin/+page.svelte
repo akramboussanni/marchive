@@ -59,14 +59,14 @@
 			<title>Admin Dashboard - marchive</title>
 </svelte:head>
 
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
 	<!-- Header -->
-	<div class="mb-8">
-		<h1 class="text-2xl font-bold text-gray-100 flex items-center space-x-2">
-			<BarChart3 class="h-6 w-6" />
+	<div class="mb-6 sm:mb-8">
+		<h1 class="text-xl sm:text-2xl font-bold text-gray-100 flex items-center space-x-2">
+			<BarChart3 class="h-5 w-5 sm:h-6 sm:w-6" />
 			<span>Admin Dashboard</span>
 		</h1>
-		<p class="text-gray-400 mt-2">
+		<p class="text-gray-400 mt-2 text-sm sm:text-base">
 			System overview and management tools
 		</p>
 	</div>
@@ -105,7 +105,7 @@
 		</div>
 	{:else if stats}
 		<!-- Stats Cards -->
-		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
 			<!-- Total Users -->
 			<div class="card p-6">
 				<div class="flex items-center">
@@ -167,7 +167,7 @@
 			</div>
 		</div>
 
-		<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+		<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
 			<!-- Recent Downloads -->
 			<div class="card p-6">
 				<h2 class="text-lg font-semibold text-gray-100 mb-4 flex items-center space-x-2">

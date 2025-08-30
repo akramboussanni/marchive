@@ -51,14 +51,14 @@
 			<title>Sign In - marchive</title>
 </svelte:head>
 
-<div class="min-h-screen bg-dark-950 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-	<div class="max-w-md w-full space-y-8">
+<div class="min-h-screen bg-dark-950 flex items-center justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
+	<div class="max-w-md w-full space-y-6 sm:space-y-8">
 		<!-- Header -->
 		<div class="text-center">
 			<div class="flex justify-center">
-				<BookOpen class="h-12 w-12 text-primary-500" />
+				<BookOpen class="h-10 w-10 sm:h-12 sm:w-12 text-primary-500" />
 			</div>
-			<h2 class="mt-6 text-3xl font-bold text-gray-100">
+			<h2 class="mt-4 sm:mt-6 text-2xl sm:text-3xl font-bold text-gray-100">
 				Welcome back
 			</h2>
 			<p class="mt-2 text-sm text-gray-400">
