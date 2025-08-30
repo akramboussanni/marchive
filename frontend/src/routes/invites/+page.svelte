@@ -146,7 +146,7 @@
 			<div class="text-blue-800 space-y-2">
 				<p>• Each user starts with 1 invite token</p>
 				<p>• Generate an invite to share with someone</p>
-				• When they use the invite, your token is consumed</p>
+				<p>• When they use the invite, your token is consumed</p>
 				<p>• You can revoke unused invites to get your token back</p>
 				<p>• New users get 1 invite token when they join</p>
 			</div>

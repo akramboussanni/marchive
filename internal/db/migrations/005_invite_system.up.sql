@@ -1,8 +1,8 @@
 -- Add invite system for users to invite others
 -- Compatible with both SQLite and PostgreSQL
 
--- Add invite_tokens column to users table (each user gets 1 invite token)
-ALTER TABLE users ADD COLUMN invite_tokens INTEGER NOT NULL DEFAULT 1;
+-- Add invite_tokens column to users table (no default invite tokens)
+ALTER TABLE users ADD COLUMN invite_tokens INTEGER NOT NULL DEFAULT 0;
 
 -- Create invites table to track generated invites
 CREATE TABLE invites (

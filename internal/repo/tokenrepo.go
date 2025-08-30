@@ -2,25 +2,29 @@ package repo
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/akramboussanni/marchive/internal/model"
 	"github.com/jmoiron/sqlx"
 )
 
 type TokenRepo struct {
+	Columns
 	db *sqlx.DB
 }
 
 func NewTokenRepo(db *sqlx.DB) *TokenRepo {
-	return &TokenRepo{db: db}
+	repo := &TokenRepo{db: db}
+	repo.Columns = ExtractColumns[model.JwtBlacklist]()
+	return repo
 }
 
 func (r *TokenRepo) RevokeToken(ctx context.Context, token model.JwtBlacklist) error {
-	query := `
-		INSERT INTO jwt_blacklist (jti, user_id, expires_at)
-		VALUES (:jti, :user_id, :expires_at)
+	query := fmt.Sprintf(`
+		INSERT INTO jwt_blacklist (%s)
+		VALUES (%s)
 		ON CONFLICT(jti) DO NOTHING
-	`
+	`, r.AllRaw, r.AllPrefixed)
 	_, err := r.db.NamedExecContext(ctx, query, token)
 	return err
 }

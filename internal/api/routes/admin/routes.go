@@ -15,6 +15,7 @@ type AdminRouter struct {
 	BookRepo            *repo.BookRepo
 	DownloadRequestRepo *repo.DownloadRequestRepo
 	RequestCreditsRepo  *repo.RequestCreditsRepo
+	RedemptionCodeRepo  *repo.RedemptionCodeRepo
 }
 
 func NewAdminRouter(repos *repo.Repos) http.Handler {
@@ -24,6 +25,7 @@ func NewAdminRouter(repos *repo.Repos) http.Handler {
 		BookRepo:            repos.Book,
 		DownloadRequestRepo: repos.DownloadRequest,
 		RequestCreditsRepo:  repos.RequestCredits,
+		RedemptionCodeRepo:  repos.RedemptionCode,
 	}
 	r := chi.NewRouter()
 
@@ -48,6 +50,15 @@ func NewAdminRouter(repos *repo.Repos) http.Handler {
 		r.Post("/users/credits/grant", ar.HandleGrantRequestCredits)
 		r.Get("/users/credits", ar.HandleListUsersWithCredits)
 		r.Get("/users/{userID}/credits", ar.HandleGetUserCredits)
+
+		// Redemption codes management
+		r.Post("/redemption-codes", ar.HandleCreateRedemptionCode)
+		r.Get("/redemption-codes", ar.HandleListRedemptionCodes)
+		r.Post("/redemption-codes/{codeID}/revoke", ar.HandleRevokeRedemptionCode)
+		r.Delete("/redemption-codes/{codeID}", ar.HandleDeleteRedemptionCode)
+
+		// User management
+		r.Post("/users/give-everyone-invite", ar.HandleGiveEveryoneInvite)
 	})
 
 	return r

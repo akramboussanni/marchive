@@ -111,6 +111,13 @@ func (r *UserRepo) CountUsers(ctx context.Context) (int, error) {
 	return count, err
 }
 
+// GiveEveryoneInviteToken gives 1 invite token to all users
+func (r *UserRepo) GiveEveryoneInviteToken(ctx context.Context) error {
+	query := `UPDATE users SET invite_tokens = invite_tokens + 1`
+	_, err := r.db.ExecContext(ctx, query)
+	return err
+}
+
 func (r *UserRepo) GetUsersWithStats(ctx context.Context, limit, offset int) ([]model.UserWithStats, error) {
 	query := `
 		SELECT u.id, u.username, u.user_role, u.created_at,

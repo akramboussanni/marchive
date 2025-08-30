@@ -77,7 +77,7 @@
 
 	<!-- Quick Actions -->
 	<div class="mb-8">
-		<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 			<a href="/admin/users" class="card p-6 hover:bg-dark-800 transition-colors inline-block">
 				<div class="flex items-center space-x-3">
 					<Users class="h-8 w-8 text-primary-500" />
@@ -94,6 +94,16 @@
 					<div>
 						<h3 class="font-medium text-gray-100">Request Credits</h3>
 						<p class="text-sm text-gray-400">Manage user request credits</p>
+					</div>
+				</div>
+			</a>
+
+			<a href="/admin/redemption-codes" class="card p-6 hover:bg-dark-800 transition-colors inline-block">
+				<div class="flex items-center space-x-3">
+					<Gift class="h-8 w-8 text-primary-500" />
+					<div>
+						<h3 class="font-medium text-gray-100">Redemption Codes</h3>
+						<p class="text-sm text-gray-400">Create and manage redemption codes</p>
 					</div>
 				</div>
 			</a>

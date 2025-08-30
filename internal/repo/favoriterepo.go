@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/akramboussanni/marchive/internal/model"
@@ -10,23 +11,32 @@ import (
 )
 
 type FavoriteRepo struct {
+	Columns
 	db *sqlx.DB
 }
 
 func NewFavoriteRepo(db *sqlx.DB) *FavoriteRepo {
-	return &FavoriteRepo{db: db}
+	repo := &FavoriteRepo{db: db}
+	repo.Columns = ExtractColumns[model.Favorite]()
+	return repo
 }
 
 func (fr *FavoriteRepo) AddFavorite(ctx context.Context, userID int64, bookHash string) error {
 	now := time.Now().Unix()
 
-	query := `
-		INSERT INTO favorites (id, user_id, book_hash, created_at)
-		VALUES ($1, $2, $3, $4)
-	`
+	favorite := &model.Favorite{
+		ID:        utils.GenerateSnowflakeID(),
+		UserID:    userID,
+		BookHash:  bookHash,
+		CreatedAt: now,
+	}
 
-	id := utils.GenerateSnowflakeID()
-	_, err := fr.db.ExecContext(ctx, query, id, userID, bookHash, now)
+	query := fmt.Sprintf(`
+		INSERT INTO favorites (%s)
+		VALUES (%s)
+	`, fr.AllRaw, fr.AllPrefixed)
+
+	_, err := fr.db.NamedExecContext(ctx, query, favorite)
 	return err
 }
 
@@ -56,31 +66,17 @@ func (fr *FavoriteRepo) IsFavorited(ctx context.Context, userID int64, bookHash 
 }
 
 func (fr *FavoriteRepo) GetUserFavorites(ctx context.Context, userID int64, limit, offset int) ([]*model.Favorite, error) {
-	query := `
-		SELECT f.id, f.user_id, f.book_hash, f.created_at
+	query := fmt.Sprintf(`
+		SELECT %s
 		FROM favorites f
 		WHERE f.user_id = $1
 		ORDER BY f.created_at DESC
 		LIMIT $2 OFFSET $3
-	`
-
-	rows, err := fr.db.QueryContext(ctx, query, userID, limit, offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
+	`, fr.AllRaw)
 
 	var favorites []*model.Favorite
-	for rows.Next() {
-		fav := &model.Favorite{}
-		err := rows.Scan(&fav.ID, &fav.UserID, &fav.BookHash, &fav.CreatedAt)
-		if err != nil {
-			return nil, err
-		}
-		favorites = append(favorites, fav)
-	}
-
-	return favorites, nil
+	err := fr.db.SelectContext(ctx, &favorites, query, userID, limit, offset)
+	return favorites, err
 }
 
 func (fr *FavoriteRepo) CountUserFavorites(ctx context.Context, userID int64) (int, error) {

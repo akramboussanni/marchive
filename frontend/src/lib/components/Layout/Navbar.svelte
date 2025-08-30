@@ -151,6 +151,16 @@
 						<span class="text-gray-200 font-medium">Invites</span>
 					</a>
 
+					<!-- Redeem Code -->
+					<a
+						href="/redeem"
+						class="btn-ghost flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-dark-800 transition-colors"
+						class:bg-dark-800={$page.url.pathname === '/redeem'}
+					>
+						<Gift class="h-6 w-6" />
+						<span class="text-gray-200 font-medium">Redeem Code</span>
+					</a>
+
 					<!-- Admin -->
 					{#if $isAdmin}
 						<a
@@ -288,6 +298,18 @@
 							<div class="flex items-center space-x-3">
 								<Mail class="h-5 w-5" />
 								<span>Invites</span>
+							</div>
+						</a>
+
+						<a
+							href="/redeem"
+							class="block px-3 py-2 text-base font-medium text-gray-300 hover:bg-dark-800 hover:text-white rounded-md transition-colors"
+							class:bg-dark-800={$page.url.pathname === '/redeem'}
+							on:click={() => showMobileMenu = false}
+						>
+							<div class="flex items-center space-x-3">
+								<Gift class="h-5 w-5" />
+								<span>Redeem Code</span>
 							</div>
 						</a>
 

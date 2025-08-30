@@ -13,15 +13,18 @@ import (
 )
 
 type SearchCacheRepo struct {
+	Columns
 	db   *sqlx.DB
 	name string
 }
 
 func NewSearchCacheRepo(db *sqlx.DB) *SearchCacheRepo {
-	return &SearchCacheRepo{
+	repo := &SearchCacheRepo{
 		db:   db,
 		name: "search_cache",
 	}
+	repo.Columns = ExtractColumns[model.SearchCache]()
+	return repo
 }
 
 // StoreSearchResults stores search results in cache and returns the cache ID
@@ -46,10 +49,10 @@ func (r *SearchCacheRepo) StoreSearchResults(ctx context.Context, userID int64, 
 		ExpiresAt:    expiresAt,
 	}
 
-	query_sql := `
-		INSERT INTO search_cache (id, user_id, query, results, total_results, created_at, expires_at) 
-		VALUES (:id, :user_id, :query, :results, :total_results, :created_at, :expires_at)
-	`
+	query_sql := fmt.Sprintf(`
+		INSERT INTO search_cache (%s) 
+		VALUES (%s)
+	`, r.AllRaw, r.AllPrefixed)
 
 	_, err = r.db.NamedExecContext(ctx, query_sql, searchCache)
 	if err != nil {
@@ -62,9 +65,8 @@ func (r *SearchCacheRepo) StoreSearchResults(ctx context.Context, userID int64, 
 // GetSearchResult retrieves a specific search result by cache ID and index
 func (r *SearchCacheRepo) GetSearchResult(ctx context.Context, userID, searchID int64, index int) (*anna.Book, error) {
 	var cache model.SearchCache
-	query := `SELECT id, user_id, query, results, total_results, created_at, expires_at 
-	          FROM search_cache 
-	          WHERE id = $1 AND user_id = $2 AND expires_at > $3`
+	query := fmt.Sprintf(`SELECT %s FROM search_cache 
+	          WHERE id = $1 AND user_id = $2 AND expires_at > $3`, r.AllRaw)
 
 	err := r.db.GetContext(ctx, &cache, query, searchID, userID, time.Now().Unix())
 	if err != nil {
@@ -89,9 +91,8 @@ func (r *SearchCacheRepo) GetSearchResult(ctx context.Context, userID, searchID 
 // GetSearchCache retrieves full search cache by ID
 func (r *SearchCacheRepo) GetSearchCache(ctx context.Context, userID, searchID int64) (*model.SearchCache, []*anna.Book, error) {
 	var cache model.SearchCache
-	query := `SELECT id, user_id, query, results, total_results, created_at, expires_at 
-	          FROM search_cache 
-	          WHERE id = $1 AND user_id = $2 AND expires_at > $3`
+	query := fmt.Sprintf(`SELECT %s FROM search_cache 
+	          WHERE id = $1 AND user_id = $2 AND expires_at > $3`, r.AllRaw)
 
 	err := r.db.GetContext(ctx, &cache, query, searchID, userID, time.Now().Unix())
 	if err != nil {

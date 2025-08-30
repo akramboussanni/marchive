@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/akramboussanni/marchive/internal/model"
@@ -13,18 +14,21 @@ import (
 )
 
 type InviteRepo struct {
+	Columns
 	db *sqlx.DB
 }
 
 func NewInviteRepo(db *sqlx.DB) *InviteRepo {
-	return &InviteRepo{db: db}
+	repo := &InviteRepo{db: db}
+	repo.Columns = ExtractColumns[model.Invite]()
+	return repo
 }
 
 // CreateInvite creates a new invite for a user
 func (r *InviteRepo) CreateInvite(ctx context.Context, inviterID int64) (*model.Invite, error) {
 	// Check if user has invite tokens
 	var tokens int
-	err := r.db.GetContext(ctx, &tokens, "SELECT invite_tokens FROM users WHERE id = ?", inviterID)
+	err := r.db.GetContext(ctx, &tokens, "SELECT invite_tokens FROM users WHERE id = $1", inviterID)
 	if err != nil {
 		return nil, err
 	}
@@ -49,16 +53,18 @@ func (r *InviteRepo) CreateInvite(ctx context.Context, inviterID int64) (*model.
 	}
 
 	// Insert invite
-	_, err = r.db.ExecContext(ctx, `
-		INSERT INTO invites (id, token, inviter_id, created_at) 
-		VALUES (?, ?, ?, ?)
-	`, utils.GenerateSnowflakeID(), token, inviterID, now)
+	invite.ID = utils.GenerateSnowflakeID()
+	query := fmt.Sprintf(`
+		INSERT INTO invites (%s) 
+		VALUES (%s)
+	`, r.AllRaw, r.AllPrefixed)
+	_, err = r.db.NamedExecContext(ctx, query, invite)
 	if err != nil {
 		return nil, err
 	}
 
 	// Deduct token from user
-	_, err = r.db.ExecContext(ctx, "UPDATE users SET invite_tokens = invite_tokens - 1 WHERE id = ?", inviterID)
+	_, err = r.db.ExecContext(ctx, "UPDATE users SET invite_tokens = invite_tokens - 1 WHERE id = $1", inviterID)
 	if err != nil {
 		return nil, err
 	}
@@ -69,9 +75,8 @@ func (r *InviteRepo) CreateInvite(ctx context.Context, inviterID int64) (*model.
 // GetInviteByToken gets an invite by its token
 func (r *InviteRepo) GetInviteByToken(ctx context.Context, token string) (*model.Invite, error) {
 	var invite model.Invite
-	err := r.db.GetContext(ctx, &invite, `
-		SELECT * FROM invites WHERE token = ? AND revoked_at IS NULL
-	`, token)
+	query := fmt.Sprintf(`SELECT %s FROM invites WHERE token = $1 AND revoked_at IS NULL`, r.AllRaw)
+	err := r.db.GetContext(ctx, &invite, query, token)
 	if err != nil {
 		return nil, err
 	}
@@ -89,16 +94,15 @@ func (r *InviteRepo) UseInvite(ctx context.Context, token string, username strin
 
 	// Get invite
 	var invite model.Invite
-	err = tx.GetContext(ctx, &invite, `
-		SELECT * FROM invites WHERE token = ? AND revoked_at IS NULL AND used_at IS NULL
-	`, token)
+	query := fmt.Sprintf(`SELECT %s FROM invites WHERE token = $1 AND revoked_at IS NULL AND used_at IS NULL`, r.AllRaw)
+	err = tx.GetContext(ctx, &invite, query, token)
 	if err != nil {
 		return err
 	}
 
 	// Check if username is already taken
 	var exists int
-	err = tx.GetContext(ctx, &exists, "SELECT 1 FROM users WHERE username = ?", username)
+	err = tx.GetContext(ctx, &exists, "SELECT 1 FROM users WHERE username = $1", username)
 	if err == nil {
 		return ErrUsernameTaken
 	}
@@ -108,7 +112,7 @@ func (r *InviteRepo) UseInvite(ctx context.Context, token string, username strin
 	now := time.Now().Unix()
 	_, err = tx.ExecContext(ctx, `
 		INSERT INTO users (id, username, password_hash, created_at, user_role, invite_tokens) 
-		VALUES (?, ?, ?, ?, 'user', 1)
+		VALUES ($1, $2, $3, $4, 'user', 1)
 	`, userID, username, passwordHash, now)
 	if err != nil {
 		return err
@@ -116,7 +120,7 @@ func (r *InviteRepo) UseInvite(ctx context.Context, token string, username strin
 
 	// Mark invite as used
 	_, err = tx.ExecContext(ctx, `
-		UPDATE invites SET invitee_username = ?, invitee_id = ?, used_at = ? WHERE token = ?
+		UPDATE invites SET invitee_username = $1, invitee_id = $2, used_at = $3 WHERE token = $4
 	`, username, userID, now, token)
 	if err != nil {
 		return err
@@ -137,9 +141,8 @@ func (r *InviteRepo) RevokeInvite(ctx context.Context, token string, inviterID i
 
 	// Get invite
 	var invite model.Invite
-	err = tx.GetContext(ctx, &invite, `
-		SELECT * FROM invites WHERE token = ? AND inviter_id = ? AND revoked_at IS NULL AND used_at IS NULL
-	`, token, inviterID)
+	query := fmt.Sprintf(`SELECT %s FROM invites WHERE token = $1 AND inviter_id = $2 AND revoked_at IS NULL AND used_at IS NULL`, r.AllRaw)
+	err = tx.GetContext(ctx, &invite, query, token, inviterID)
 	if err != nil {
 		return err
 	}
@@ -147,7 +150,7 @@ func (r *InviteRepo) RevokeInvite(ctx context.Context, token string, inviterID i
 	// Mark invite as revoked
 	now := time.Now().Unix()
 	_, err = tx.ExecContext(ctx, `
-		UPDATE invites SET revoked_at = ? WHERE token = ?
+		UPDATE invites SET revoked_at = $1 WHERE token = $2
 	`, now, token)
 	if err != nil {
 		return err
@@ -155,7 +158,7 @@ func (r *InviteRepo) RevokeInvite(ctx context.Context, token string, inviterID i
 
 	// Return token to user
 	_, err = tx.ExecContext(ctx, `
-		UPDATE users SET invite_tokens = invite_tokens + 1 WHERE id = ?
+		UPDATE users SET invite_tokens = invite_tokens + 1 WHERE id = $1
 	`, inviterID)
 	if err != nil {
 		return err
@@ -168,16 +171,15 @@ func (r *InviteRepo) RevokeInvite(ctx context.Context, token string, inviterID i
 // GetUserInvites gets all invites for a user
 func (r *InviteRepo) GetUserInvites(ctx context.Context, userID int64) ([]model.Invite, error) {
 	var invites []model.Invite
-	err := r.db.SelectContext(ctx, &invites, `
-		SELECT * FROM invites WHERE inviter_id = ? ORDER BY created_at DESC
-	`, userID)
+	query := fmt.Sprintf(`SELECT %s FROM invites WHERE inviter_id = $1 ORDER BY created_at DESC`, r.AllRaw)
+	err := r.db.SelectContext(ctx, &invites, query, userID)
 	return invites, err
 }
 
 // GetUserInviteTokens gets the number of invite tokens a user has
 func (r *InviteRepo) GetUserInviteTokens(ctx context.Context, userID int64) (int, error) {
 	var tokens int
-	err := r.db.GetContext(ctx, &tokens, "SELECT invite_tokens FROM users WHERE id = ?", userID)
+	err := r.db.GetContext(ctx, &tokens, "SELECT invite_tokens FROM users WHERE id = $1", userID)
 	return tokens, err
 }
 
@@ -193,7 +195,7 @@ func (r *InviteRepo) generateUniqueToken(ctx context.Context) (string, error) {
 
 		// Check if token already exists
 		var exists int
-		err := r.db.GetContext(ctx, &exists, "SELECT 1 FROM invites WHERE token = ?", token)
+		err := r.db.GetContext(ctx, &exists, "SELECT 1 FROM invites WHERE token = $1", token)
 		if err != nil {
 			// Token doesn't exist, we can use it
 			return token, nil
