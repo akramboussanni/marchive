@@ -62,7 +62,7 @@
 
 	function debounceSearch() {
 		clearTimeout(searchTimeout);
-		searchTimeout = setTimeout(loadUsers, 300);
+		searchTimeout = setTimeout(loadUsers, 1500);
 	}
 
 	async function loadMoreUsers() {

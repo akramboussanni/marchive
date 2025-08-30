@@ -35,7 +35,7 @@
 		
 		clearTimeout(searchTimeout);
 		currentPage = 0; // Reset to first page on new search
-		searchTimeout = setTimeout(performSearch, 300);
+		searchTimeout = setTimeout(performSearch, 1500);
 	}
 
 	async function performSearch(page = 0) {
@@ -166,6 +166,7 @@
 			{:else if searchResults.length > 0}
 				<div class="grid grid-cols-1 gap-3 sm:gap-4">
 					{#each searchResults as book, index}
+						{@const globalIndex = currentPage * searchLimit + index}
 						<div class="card p-4 hover:bg-dark-800 transition-all duration-200">
 							<div class="flex space-x-4">
 								<!-- Book Cover -->
@@ -195,7 +196,7 @@
 									<!-- Download Button -->
 									<div class="mt-3">
 										<button
-											on:click={() => handleDownload(book, index)}
+											on:click={() => handleDownload(book, globalIndex)}
 											disabled={downloadingBooks.has(book.hash)}
 											class="btn-primary text-xs px-3 py-1 flex items-center space-x-1"
 										>
