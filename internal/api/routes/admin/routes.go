@@ -48,8 +48,6 @@ func NewAdminRouter(repos *repo.Repos) http.Handler {
 
 		// Request credits management
 		r.Post("/users/credits/grant", ar.HandleGrantRequestCredits)
-		r.Get("/users/credits", ar.HandleListUsersWithCredits)
-		r.Get("/users/{userID}/credits", ar.HandleGetUserCredits)
 
 		// Redemption codes management
 		r.Post("/redemption-codes", ar.HandleCreateRedemptionCode)

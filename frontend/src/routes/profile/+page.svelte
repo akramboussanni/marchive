@@ -3,6 +3,7 @@
 	import { User, Key, Shield, Calendar, Download, Loader2, LogOut } from 'lucide-svelte';
 	import { auth, user, isAuthenticated } from '$lib/stores/auth';
 	import { goto } from '$app/navigation';
+	import PasswordInput from '$lib/components/UI/PasswordInput.svelte';
 
 	let currentPassword = '';
 	let newPassword = '';
@@ -10,6 +11,9 @@
 	let changingPassword = false;
 	let passwordError = '';
 	let passwordSuccess = false;
+	
+	// Password validation state from components
+	let passwordsMatch = false;
 
 	onMount(async () => {
 		if (!$isAuthenticated) {
@@ -28,13 +32,13 @@
 			return;
 		}
 
-		if (newPassword !== confirmPassword) {
-			passwordError = 'New passwords do not match';
+		if (newPassword.length < 8) {
+			passwordError = 'Password must be at least 8 characters long';
 			return;
 		}
 
-		if (newPassword.length < 8) {
-			passwordError = 'Password must be at least 8 characters long';
+		if (newPassword !== confirmPassword) {
+			passwordError = 'New passwords do not match';
 			return;
 		}
 

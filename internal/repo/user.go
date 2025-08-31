@@ -62,33 +62,10 @@ func (r *UserRepo) DeleteUser(ctx context.Context, id int64) error {
 	return err
 }
 
-func (r *UserRepo) AssignUserResetToken(ctx context.Context, token string, iat int64, userID int64) error {
-	query := `
-		UPDATE users
-		SET password_reset_token = $1,
-		    password_reset_issuedat = $2
-		WHERE id = $3
-	`
-	_, err := r.db.ExecContext(ctx, query, token, iat, userID)
-	return err
-}
-
-func (r *UserRepo) GetUserByResetToken(ctx context.Context, tokenHash string) (*model.User, error) {
-	var user model.User
-	query := fmt.Sprintf("SELECT %s FROM users WHERE password_reset_token = $1", r.AllRaw)
-	err := r.db.GetContext(ctx, &user, query, tokenHash)
-	if err != nil {
-		return nil, err
-	}
-	return &user, nil
-}
-
 func (r *UserRepo) ChangeUserPassword(ctx context.Context, newPasswordHash string, userID int64) error {
 	query := `
 		UPDATE users
-		SET password_hash = $1,
-			password_reset_token = '',
-		    password_reset_issuedat = 0
+		SET password_hash = $1
 		WHERE id = $2
 	`
 	_, err := r.db.ExecContext(ctx, query, newPasswordHash, userID)
@@ -121,7 +98,8 @@ func (r *UserRepo) GiveEveryoneInviteToken(ctx context.Context) error {
 func (r *UserRepo) GetUsersWithStats(ctx context.Context, limit, offset int) ([]model.UserWithStats, error) {
 	query := `
 		SELECT u.id, u.username, u.user_role, u.created_at,
-		       COALESCE(dl.download_count, 0) as download_count
+		       COALESCE(dl.download_count, 0) as download_count,
+		       COALESCE(u.request_credits, 0) as request_credits
 		FROM users u
 		LEFT JOIN (
 			SELECT user_id, COUNT(*) as download_count
@@ -143,7 +121,7 @@ func (r *UserRepo) GetUsersWithStats(ctx context.Context, limit, offset int) ([]
 		var user model.UserWithStats
 		err := rows.Scan(
 			&user.ID, &user.Username, &user.Role,
-			&user.CreatedAt, &user.DownloadCount,
+			&user.CreatedAt, &user.DownloadCount, &user.RequestCredits,
 		)
 		if err != nil {
 			return nil, err
@@ -161,7 +139,8 @@ func (r *UserRepo) SearchUsers(ctx context.Context, query, role string, limit, o
 	if query != "" && role != "" {
 		sqlQuery = `
 			SELECT u.id, u.username, u.user_role, u.created_at,
-			       COALESCE(dl.download_count, 0) as download_count
+			       COALESCE(dl.download_count, 0) as download_count,
+			       COALESCE(u.request_credits, 0) as request_credits
 			FROM users u
 			LEFT JOIN (
 				SELECT user_id, COUNT(*) as download_count
@@ -177,7 +156,8 @@ func (r *UserRepo) SearchUsers(ctx context.Context, query, role string, limit, o
 	} else if query != "" {
 		sqlQuery = `
 			SELECT u.id, u.username, u.user_role, u.created_at,
-			       COALESCE(dl.download_count, 0) as download_count
+			       COALESCE(dl.download_count, 0) as download_count,
+			       COALESCE(u.request_credits, 0) as request_credits
 			FROM users u
 			LEFT JOIN (
 				SELECT user_id, COUNT(*) as download_count
@@ -193,7 +173,8 @@ func (r *UserRepo) SearchUsers(ctx context.Context, query, role string, limit, o
 	} else if role != "" {
 		sqlQuery = `
 			SELECT u.id, u.username, u.user_role, u.created_at,
-			       COALESCE(dl.download_count, 0) as download_count
+			       COALESCE(dl.download_count, 0) as download_count,
+			       COALESCE(u.request_credits, 0) as request_credits
 			FROM users u
 			LEFT JOIN (
 				SELECT user_id, COUNT(*) as download_count
@@ -220,7 +201,7 @@ func (r *UserRepo) SearchUsers(ctx context.Context, query, role string, limit, o
 		var user model.UserWithStats
 		err := rows.Scan(
 			&user.ID, &user.Username, &user.Role,
-			&user.CreatedAt, &user.DownloadCount,
+			&user.CreatedAt, &user.DownloadCount, &user.RequestCredits,
 		)
 		if err != nil {
 			return nil, err

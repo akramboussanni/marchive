@@ -141,26 +141,6 @@
 						<span class="text-gray-200 font-medium">Downloads</span>
 					</a>
 
-					<!-- Invites -->
-					<a
-						href="/invites"
-						class="btn-ghost flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-dark-800 transition-colors"
-						class:bg-dark-800={$page.url.pathname === '/invites'}
-					>
-						<Mail class="h-6 w-6" />
-						<span class="text-gray-200 font-medium">Invites</span>
-					</a>
-
-					<!-- Redeem Code -->
-					<a
-						href="/redeem"
-						class="btn-ghost flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-dark-800 transition-colors"
-						class:bg-dark-800={$page.url.pathname === '/redeem'}
-					>
-						<Gift class="h-6 w-6" />
-						<span class="text-gray-200 font-medium">Redeem Code</span>
-					</a>
-
 					<!-- Admin -->
 					{#if $isAdmin}
 						<a
@@ -175,20 +155,6 @@
 
 					<!-- User Menu -->
 					<div class="relative">
-						<!-- Request Credits Display -->
-						{#if requestCredits > 0}
-							<div class="flex items-center space-x-2 mr-4 px-3 py-2 bg-primary-500/20 border border-primary-500/30 rounded-lg group relative">
-								<Gift class="h-4 w-4 text-primary-400" />
-								<span class="text-sm text-primary-300 font-medium">{requestCredits} credits</span>
-								
-								<!-- Tooltip -->
-								<div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-dark-800 text-gray-200 text-xs rounded-lg border border-gray-700 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-									Request credits allow you to download books<br/>beyond your daily limit
-									<div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-dark-800"></div>
-								</div>
-							</div>
-						{/if}
-
 						<button
 							on:click={() => showUserMenu = !showUserMenu}
 							class="btn-ghost flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-dark-800 transition-colors"
@@ -205,6 +171,22 @@
 									on:click={() => showUserMenu = false}
 								>
 									Profile Settings
+								</a>
+								<a
+									href="/invites"
+									class="block px-4 py-2 text-sm text-gray-300 hover:bg-dark-700"
+									on:click={() => showUserMenu = false}
+								>
+									<Mail class="h-4 w-4 inline mr-2" />
+									Invites
+								</a>
+								<a
+									href="/redeem"
+									class="block px-4 py-2 text-sm text-gray-300 hover:bg-dark-700"
+									on:click={() => showUserMenu = false}
+								>
+									<Gift class="h-4 w-4 inline mr-2" />
+									Redeem Code
 								</a>
 								<button
 									on:click={handleLogout}
@@ -289,29 +271,7 @@
 							</div>
 						</a>
 
-						<a
-							href="/invites"
-							class="block px-3 py-2 text-base font-medium text-gray-300 hover:bg-dark-800 hover:text-white rounded-md transition-colors"
-							class:bg-dark-800={$page.url.pathname === '/invites'}
-							on:click={() => showMobileMenu = false}
-						>
-							<div class="flex items-center space-x-3">
-								<Mail class="h-5 w-5" />
-								<span>Invites</span>
-							</div>
-						</a>
 
-						<a
-							href="/redeem"
-							class="block px-3 py-2 text-base font-medium text-gray-300 hover:bg-dark-800 hover:text-white rounded-md transition-colors"
-							class:bg-dark-800={$page.url.pathname === '/redeem'}
-							on:click={() => showMobileMenu = false}
-						>
-							<div class="flex items-center space-x-3">
-								<Gift class="h-5 w-5" />
-								<span>Redeem Code</span>
-							</div>
-						</a>
 
 						{#if $isAdmin}
 							<a
@@ -356,7 +316,7 @@
 
 <!-- Search Modal -->
 {#if showSearchModal}
-	<SearchModal {searchQuery} on:close={() => showSearchModal = false} on:downloadRequested={handleDownloadRequested} />
+	<SearchModal query={searchQuery} on:close={() => showSearchModal = false} on:downloadRequested={handleDownloadRequested} />
 {/if}
 
 <!-- Click outside to close user menu -->

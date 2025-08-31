@@ -30,7 +30,7 @@ export interface RedemptionCodeListResponse {
 		limit: number;
 		offset: number;
 		total: number;
-		hasNext: boolean;
+		has_next: boolean;
 	};
 }
 
@@ -50,29 +50,27 @@ export interface RedeemCodeResponse {
 class RedemptionCodeStore {
 	async createCode(request: CreateRedemptionCodeRequest): Promise<RedemptionCode> {
 		const response = await api.post('/admin/redemption-codes', request);
-		return response.data;
+		return api.handleResponse<RedemptionCode>(response);
 	}
 
 	async listCodes(limit = 20, offset = 0): Promise<RedemptionCodeListResponse> {
 		const response = await api.get(`/admin/redemption-codes?limit=${limit}&offset=${offset}`);
-		return response.data;
+		return api.handleResponse<RedemptionCodeListResponse>(response);
 	}
 
 	async revokeCode(codeId: string): Promise<void> {
-		await api.post(`/admin/redemption-codes/${codeId}/revoke`);
+		const response = await api.post(`/admin/redemption-codes/${codeId}/revoke`, {});
+		await api.handleResponse(response);
 	}
 
 	async deleteCode(codeId: string): Promise<void> {
-		await api.delete(`/admin/redemption-codes/${codeId}`);
+		const response = await api.delete(`/admin/redemption-codes/${codeId}`);
+		await api.handleResponse(response);
 	}
 
 	async redeemCode(request: RedeemCodeRequest): Promise<RedeemCodeResponse> {
 		const response = await api.post('/redemption-codes/redeem', request);
-		return response.data;
-	}
-
-	async giveEveryoneInvite(): Promise<void> {
-		await api.post('/admin/users/give-everyone-invite');
+		return api.handleResponse<RedeemCodeResponse>(response);
 	}
 }
 
@@ -88,7 +86,7 @@ export const redemptionCodesPagination = writable({
 	limit: 20,
 	offset: 0,
 	total: 0,
-	hasNext: false
+	has_next: false
 });
 
 // Store for create code form

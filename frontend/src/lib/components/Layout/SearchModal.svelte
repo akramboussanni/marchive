@@ -213,28 +213,22 @@
 						Daily limit: {downloadStatus.daily_limit} • Credits allow extra downloads
 					</div>
 				</div>
-				<div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-					<!-- Daily Downloads -->
-					<div class="text-center p-2 bg-dark-700 rounded-lg">
-						<div class="text-lg font-bold text-gray-100">{downloadStatus.downloads_used}</div>
-						<div class="text-xs text-gray-400">Used Today</div>
-						<div class="text-xs text-gray-500">of {downloadStatus.daily_limit}</div>
-					</div>
-					
-					<!-- Remaining Downloads -->
-					<div class="text-center p-2 bg-dark-700 rounded-lg">
-						<div class="text-lg font-bold text-green-400">{downloadStatus.downloads_remaining}</div>
-						<div class="text-xs text-gray-400">Remaining</div>
-					</div>
-					
-					<!-- Request Credits -->
-					<div class="text-center p-2 bg-dark-700 rounded-lg">
-						<div class="text-lg font-bold text-primary-400 flex items-center justify-center space-x-1">
-							<Gift class="h-4 w-4" />
-							<span>{downloadStatus.request_credits}</span>
+				<div class="grid grid-cols-2 sm:grid-cols-2 gap-3">
+					<!-- Downloads Remaining + Credits -->
+					<div class="text-center p-2 bg-dark-700 rounded-lg group relative">
+						<div class="text-lg font-bold text-green-400">
+							{downloadStatus.downloads_remaining}
+							{#if downloadStatus.request_credits > 0}
+								<span class="text-amber-400 animate-pulse">+{downloadStatus.request_credits}</span>
+							{/if}
 						</div>
-						<div class="text-xs text-gray-400">Credits</div>
-						<div class="text-xs text-gray-500">for extra</div>
+						<div class="text-xs text-gray-400">Remaining</div>
+						{#if downloadStatus.request_credits > 0}
+							<div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-gray-100 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+								Credits allow extra downloads when daily limit is reached
+								<div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+							</div>
+						{/if}
 					</div>
 					
 					<!-- Next Reset -->

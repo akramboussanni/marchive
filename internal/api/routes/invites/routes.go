@@ -9,7 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func NewInviteRoutes(inviteRepo *repo.InviteRepo, userRepo *repo.UserRepo) http.Handler {
+func NewInviteRoutes(inviteRepo *repo.InviteRepo, userRepo *repo.UserRepo, tokenRepo *repo.TokenRepo) http.Handler {
 	ir := NewInviteRouter(inviteRepo, userRepo)
 	r := chi.NewRouter()
 
@@ -18,7 +18,7 @@ func NewInviteRoutes(inviteRepo *repo.InviteRepo, userRepo *repo.UserRepo) http.
 	// 15/min + auth for invite management
 	r.Group(func(r chi.Router) {
 		middleware.AddRatelimit(r, 15, 1*time.Minute)
-		middleware.AddAuth(r, userRepo, nil)
+		middleware.AddAuth(r, userRepo, tokenRepo)
 		r.Post("/", ir.HandleCreateInvite)
 		r.Get("/", ir.HandleListInvites)
 		r.Post("/{token}/revoke", ir.HandleRevokeInvite)

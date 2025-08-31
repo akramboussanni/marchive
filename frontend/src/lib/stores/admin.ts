@@ -8,6 +8,7 @@ export interface UserWithStats {
 	created_at: string;
 	download_count: number;
 	last_active?: string;
+	request_credits: number;
 }
 
 export interface SystemStats {
@@ -99,6 +100,15 @@ export const admin = {
 
 	async invalidateUserSessions(userId: string): Promise<void> {
 		const response = await api.post(`/admin/users/${userId}/invalidate-sessions`, {});
+		await api.handleResponse(response);
+	},
+
+	async grantRequestCredits(userId: string, amount: number, reason: string): Promise<void> {
+		const response = await api.post('/admin/users/credits/grant', {
+			user_id: parseInt(userId),
+			amount,
+			reason
+		});
 		await api.handleResponse(response);
 	}
 };

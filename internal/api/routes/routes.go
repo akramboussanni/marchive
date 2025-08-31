@@ -2,9 +2,6 @@ package routes
 
 import (
 	"net/http"
-	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/akramboussanni/marchive/internal/api"
 	"github.com/akramboussanni/marchive/internal/api/routes/admin"
@@ -12,6 +9,7 @@ import (
 	"github.com/akramboussanni/marchive/internal/api/routes/books"
 	"github.com/akramboussanni/marchive/internal/api/routes/invites"
 	"github.com/akramboussanni/marchive/internal/middleware"
+
 	"github.com/akramboussanni/marchive/internal/repo"
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
@@ -30,40 +28,10 @@ func SetupRouter(repos *repo.Repos) http.Handler {
 	r.Mount("/api/auth", auth.NewAuthRouter(repos.User, repos.Token, repos.Lockout, repos.RequestCredits))
 	r.Mount("/api/books", books.NewBookRouter(repos))
 	r.Mount("/api/admin", admin.NewAdminRouter(repos))
-	r.Mount("/api/invites", invites.NewInviteRoutes(repos.Invite, repos.User))
+	r.Mount("/api/invites", invites.NewInviteRoutes(repos.Invite, repos.User, repos.Token))
 	r.Mount("/api/redemption-codes", NewRedemptionCodeRouter(repos))
 
-	frontendDir := os.Getenv("FRONTEND_DIR")
-	if frontendDir == "" {
-		frontendDir = "./frontend/build"
-	}
-
-	if _, err := os.Stat(frontendDir); os.IsNotExist(err) {
-
-	}
-
-	r.Handle("/_app/*", http.StripPrefix("/_app/", http.FileServer(http.Dir(filepath.Join(frontendDir, "_app")))))
-	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir(filepath.Join(frontendDir, "static")))))
-
-	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasPrefix(r.URL.Path, "/api/") {
-			http.NotFound(w, r)
-			return
-		}
-
-		if strings.HasPrefix(r.URL.Path, "/_app/") || strings.HasPrefix(r.URL.Path, "/static/") {
-			http.NotFound(w, r)
-			return
-		}
-
-		indexPath := filepath.Join(frontendDir, "index.html")
-		if _, err := os.Stat(indexPath); os.IsNotExist(err) {
-			http.NotFound(w, r)
-			return
-		}
-
-		http.ServeFile(w, r, indexPath)
-	})
+	setupStaticRoutes(r)
 
 	return r
 }

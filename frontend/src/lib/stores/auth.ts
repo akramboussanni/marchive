@@ -23,7 +23,7 @@ export const auth = {
 				console.log('Login successful, checking auth...');
 				// Reset failed refresh count on successful login
 				api.resetFailedRefreshCount();
-				await this.checkAuth();
+				await this.checkAuthWithRefresh();
 				return true;
 			}
 			console.log('Login failed:', response.status);
@@ -49,9 +49,13 @@ export const auth = {
 		}
 	},
 
-	async checkAuth(retryCount = 0): Promise<void> {
+	/**
+	 * Enhanced authentication check that always attempts refresh when /me fails
+	 * This is the main method that should be used for checking auth state
+	 */
+	async checkAuthWithRefresh(): Promise<boolean> {
 		try {
-			console.log('Checking authentication...');
+			console.log('Checking authentication with automatic refresh...');
 			const response = await api.get('/auth/me');
 			if (response.ok) {
 				const userData = await response.json();
@@ -59,46 +63,36 @@ export const auth = {
 				user.set(userData);
 				isAuthenticated.set(true);
 				isAdmin.set(userData.role === 'admin');
-				return;
-			} else if (response.status === 401) {
-				console.log('Auth check failed (401), attempting token refresh...');
-				// Unauthorized - try to refresh the token first
-				const refreshSuccess = await this.refreshToken();
-				if (refreshSuccess) {
-					// Token refreshed successfully, we're now authenticated
-					return;
-				}
-				
-				// Refresh failed - clear auth state
-				console.log('Token refresh failed, clearing auth state...');
-				this.clearAuthState();
-			} else {
-				// Other errors - retry up to 2 times
-				if (retryCount < 2) {
-					console.log(`Auth check failed, retrying... (${retryCount + 1}/2)`);
-					setTimeout(() => this.checkAuth(retryCount + 1), 1000 * (retryCount + 1));
-					return;
-				}
-				
-				// Max retries reached
-				console.log('Max auth check retries reached');
-				this.clearAuthState();
-				showWarning('Connection Issue', 'Unable to verify authentication status. Please refresh the page.');
-			}
-		} catch (error) {
-			console.error('Auth check error:', error);
-			
-			// Network error - retry up to 2 times
-			if (retryCount < 2) {
-				console.log(`Auth check failed, retrying... (${retryCount + 1}/2)`);
-				setTimeout(() => this.checkAuth(retryCount + 1), 1000 * (retryCount + 1));
-				return;
+				return true;
 			}
 			
-			// Max retries reached
-			console.log('Max auth check retries reached');
+			// Any failure of /me (including 401, 500, network errors, etc.) triggers refresh
+			console.log('Auth check failed, attempting token refresh...');
+			const refreshSuccess = await this.refreshToken();
+			if (refreshSuccess) {
+				console.log('Token refresh successful after /me failure');
+				return true;
+			}
+			
+			// Refresh failed - clear auth state
+			console.log('Token refresh failed after /me failure, clearing auth state...');
 			this.clearAuthState();
-			showError('Connection Error', 'Unable to connect to the server. Please check your internet connection.');
+			return false;
+		} catch (error) {
+			console.error('Auth check with refresh error:', error);
+			
+			// Even network errors trigger refresh attempt
+			console.log('Network error during auth check, attempting token refresh...');
+			const refreshSuccess = await this.refreshToken();
+			if (refreshSuccess) {
+				console.log('Token refresh successful after network error');
+				return true;
+			}
+			
+			// Refresh failed - clear auth state
+			console.log('Token refresh failed after network error, clearing auth state...');
+			this.clearAuthState();
+			return false;
 		}
 	},
 
@@ -165,37 +159,6 @@ export const auth = {
 			isAuthenticated.set(false);
 			isAdmin.set(false);
 			goto('/login');
-		}
-	},
-
-	async makeAuthenticatedRequest<T>(
-		requestFn: () => Promise<T>,
-		onAuthFailure?: () => void
-	): Promise<T | null> {
-		try {
-			return await requestFn();
-		} catch (error: any) {
-			if (error?.status === 401) {
-				console.log('Request failed with 401, attempting token refresh...');
-				// Try to refresh the token
-				const refreshSuccess = await this.refreshToken();
-				if (refreshSuccess) {
-					console.log('Token refreshed, retrying request...');
-					// Retry the request
-					try {
-						return await requestFn();
-					} catch (retryError) {
-						console.error('Request failed after token refresh:', retryError);
-						return null;
-					}
-				} else {
-					console.log('Token refresh failed, calling failure handler...');
-					// Refresh failed, call the failure handler
-					onAuthFailure?.();
-					return null;
-				}
-			}
-			throw error;
 		}
 	},
 

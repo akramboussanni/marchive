@@ -69,8 +69,8 @@
 		}
 	}
 
-	async function handlePageChange(page: number) {
-		currentPage = page;
+	async function handlePageChange(event: CustomEvent<number>) {
+		currentPage = event.detail;
 		await loadDownloads();
 	}
 
@@ -143,7 +143,7 @@
 		return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
 	}
 
-	async function handleDownload(hash: string, title: string) {
+	async function handleDownload(hash: string, title: string, format?: string) {
 		if (downloadingHashes.has(hash)) return; // Prevent multiple downloads
 		
 		downloadingHashes.add(hash);
@@ -156,7 +156,10 @@
 			const url = window.URL.createObjectURL(blob);
 			const link = document.createElement('a');
 			link.href = url;
-			link.download = `${title || 'book'}.pdf`; // Default to PDF, adjust as needed
+			
+			// Use the actual book format if available, otherwise default to PDF
+			const fileExtension = format ? format.toLowerCase() : 'pdf';
+			link.download = `${title || 'book'}.${fileExtension}`;
 			
 			// Trigger download
 			document.body.appendChild(link);
@@ -216,42 +219,40 @@
 
 		<!-- Download Status -->
 		{#if downloadStatus && !statusLoading}
-			<div class="mb-8 p-6 bg-dark-800 border border-gray-700 rounded-lg">
-				<h2 class="text-lg font-semibold text-gray-100 mb-4">Download Status</h2>
-				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-					<!-- Daily Downloads -->
-					<div class="text-center p-4 bg-dark-700 rounded-lg">
-						<div class="text-2xl font-bold text-gray-100">{downloadStatus.downloads_used}</div>
-						<div class="text-sm text-gray-400">Used Today</div>
-						<div class="text-xs text-gray-500">of {downloadStatus.daily_limit}</div>
+			<div class="mb-6 p-4 bg-dark-800 border border-gray-700 rounded-lg">
+				<div class="flex items-center justify-between mb-3">
+					<h2 class="text-base font-semibold text-gray-100">Download Status</h2>
+					<div class="text-xs text-gray-500">
+						Daily limit: {downloadStatus.daily_limit}
 					</div>
-					
-					<!-- Remaining Downloads -->
-					<div class="text-center p-4 bg-dark-700 rounded-lg">
-						<div class="text-2xl font-bold text-green-400">{downloadStatus.downloads_remaining}</div>
-						<div class="text-sm text-gray-400">Remaining Today</div>
-					</div>
-					
-					<!-- Request Credits -->
-					<div class="text-center p-4 bg-dark-700 rounded-lg">
-						<div class="text-2xl font-bold text-primary-400 flex items-center justify-center space-x-2">
-							<Gift class="h-5 w-5" />
-							<span>{downloadStatus.request_credits}</span>
-						</div>
-						<div class="text-sm text-gray-400">Request Credits</div>
-						<div class="text-xs text-gray-500">for extra downloads</div>
+				</div>
+				<div class="flex items-center space-x-8 text-sm">
+					<!-- Downloads Remaining + Credits -->
+					<div class="flex items-center space-x-2 group relative">
+						<span class="text-gray-400">Remaining:</span>
+						<span class="font-semibold text-green-400">
+							{downloadStatus.downloads_remaining}
+							{#if downloadStatus.request_credits > 0}
+								<span class="text-amber-400 animate-pulse">+{downloadStatus.request_credits}</span>
+							{/if}
+						</span>
+						{#if downloadStatus.request_credits > 0}
+							<div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-gray-100 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+								Credits allow extra downloads when daily limit is reached
+								<div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+							</div>
+						{/if}
 					</div>
 					
 					<!-- Next Reset -->
-					<div class="text-center p-4 bg-dark-700 rounded-lg">
-						<div class="text-lg font-bold text-yellow-400">
+					<div class="flex items-center space-x-2">
+						<span class="text-gray-400">Resets:</span>
+						<span class="font-semibold text-yellow-400">
 							{new Date(downloadStatus.next_reset).toLocaleTimeString('en-US', { 
 								hour: '2-digit', 
 								minute: '2-digit' 
 							})}
-						</div>
-						<div class="text-sm text-gray-400">Next Reset</div>
-						<div class="text-xs text-gray-500">Daily limit resets</div>
+						</span>
 					</div>
 				</div>
 			</div>
@@ -367,7 +368,7 @@
 									<!-- Download Button -->
 									{#if download.status === 'ready' || download.status === 'completed'}
 										<button
-											on:click={() => handleDownload(download.book_hash, download.title)}
+											on:click={() => handleDownload(download.book_hash, download.title || 'Unknown Title', download.format)}
 											disabled={downloadingHashes.has(download.book_hash)}
 											class="btn-primary text-xs flex items-center space-x-1"
 											class:opacity-50={downloadingHashes.has(download.book_hash)}
@@ -394,8 +395,7 @@
 					<Pagination
 						currentPage={currentPage}
 						totalPages={totalPages}
-						onPageChange={handlePageChange}
-						showInfo={true}
+						on:pageChange={handlePageChange}
 					/>
 				</div>
 			{/if}

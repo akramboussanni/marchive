@@ -11,7 +11,7 @@ Book library with over 100M+ books using Anna's Archive.
 
 ## Screenshots
 
-![Marchived Dashboard](static/dashboard.png)
+![marchived Dashboard](static/dashboard.png)
 
 *The main dashboard*
 
@@ -68,8 +68,19 @@ The `-tags=debug` flag enables SQLite mode for local development, so you don't n
 
 Open your browser and go to `http://localhost:9520` - the backend will serve both the API and the frontend.
 
-#### Hot reload setup
-I forgot to do this. I will add it some day.
+#### Hot Reload Development
+
+For development with hot reload (frontend on localhost:5173, backend on localhost:9520):
+
+```bash
+python dev.py
+```
+
+This will:
+- Start the frontend dev server on http://localhost:5173 with hot reload
+- Start the backend server on http://localhost:9520
+- Automatically install dependencies
+- Provide real-time logs for both services
 
 ## 📁 Project Structure
 

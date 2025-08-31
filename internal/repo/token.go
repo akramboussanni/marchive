@@ -30,6 +30,10 @@ func (r *TokenRepo) RevokeToken(ctx context.Context, token model.JwtBlacklist) e
 }
 
 func (r *TokenRepo) IsTokenRevoked(jti string) (bool, error) {
+	if r.db == nil {
+		return false, fmt.Errorf("database connection is nil")
+	}
+
 	var exists bool
 	err := r.db.Get(&exists, `
 		SELECT EXISTS(SELECT 1 FROM jwt_blacklist WHERE jti = $1)

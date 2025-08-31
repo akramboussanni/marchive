@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { BarChart3, Users, BookOpen, Download, Activity, TrendingUp, Gift } from 'lucide-svelte';
-	import { isAuthenticated, isAdmin } from '$lib/stores/auth';
+	import { isAuthenticated, isAdmin, auth } from '$lib/stores/auth';
 	import { admin, systemStats, type SystemStats } from '$lib/stores/admin';
 
 	let stats: SystemStats | null = null;
@@ -88,12 +88,12 @@
 				</div>
 			</a>
 			
-			<a href="/admin/credits" class="card p-6 hover:bg-dark-800 transition-colors inline-block">
+			<a href="/admin/books" class="card p-6 hover:bg-dark-800 transition-colors inline-block">
 				<div class="flex items-center space-x-3">
-					<Gift class="h-8 w-8 text-primary-500" />
+					<BookOpen class="h-8 w-8 text-primary-500" />
 					<div>
-						<h3 class="font-medium text-gray-100">Request Credits</h3>
-						<p class="text-sm text-gray-400">Manage user request credits</p>
+						<h3 class="font-medium text-gray-100">Manage Books</h3>
+						<p class="text-sm text-gray-400">View and manage book collection</p>
 					</div>
 				</div>
 			</a>
@@ -184,7 +184,7 @@
 						<Activity class="h-8 w-8 text-yellow-400" />
 					</div>
 					<div class="ml-4">
-						<p class="text-6xl font-bold text-gray-100">
+						<p class="text-2xl font-bold text-gray-100">
 							{formatNumber(stats.active_users_24h)}
 						</p>
 						<p class="text-sm text-gray-400">Active (24h)</p>

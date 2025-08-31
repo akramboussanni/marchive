@@ -65,14 +65,3 @@ type RequestCreditsResponse struct {
 	RequestCredits int    `json:"request_credits" example:"5"`
 	Message        string `json:"message" example:"Credits updated successfully"`
 }
-
-type UserCreditsListResponse struct {
-	Users []UserWithCredits `json:"users"`
-}
-
-type UserWithCredits struct {
-	ID             int64  `json:"id,string" example:"123456789"`
-	Username       string `json:"username" example:"johndoe"`
-	Role           string `json:"role" example:"user"`
-	RequestCredits int    `json:"request_credits" example:"5"`
-}

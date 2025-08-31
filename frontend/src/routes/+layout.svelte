@@ -8,23 +8,23 @@
 	import { auth, isAuthenticated } from '$lib/stores/auth';
 
 	onMount(async () => {
-		// Check authentication status on app load
-		await auth.checkAuth();
+		// Check authentication status on app load with automatic refresh
+		await auth.checkAuthWithRefresh();
 	});
 
 	// Don't show navbar on login page
 	$: showNavbar = !$page.url.pathname.startsWith('/login');
 
 	// Define public routes that don't require authentication
-	const publicRoutes = ['/', '/login'];
+	const publicRoutes = ['/', '/login', '/register'];
 	
 	// Handle authentication state changes
 	$: if (!$isAuthenticated && !publicRoutes.includes($page.url.pathname)) {
 		// User is on a protected page but not authenticated
-		// Try to refresh the token automatically
-		auth.checkAuth().then(() => {
+		// Try to refresh the token automatically using the enhanced method
+		auth.checkAuthWithRefresh().then((success) => {
 			// If still not authenticated after refresh attempt, redirect to login
-			if (!$isAuthenticated) {
+			if (!success) {
 				goto('/login');
 			}
 		});

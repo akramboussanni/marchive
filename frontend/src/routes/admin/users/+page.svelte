@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { Search, Plus, Users, Edit, Trash2, Key, Shield, UserX, Loader2 } from 'lucide-svelte';
-	import { isAuthenticated, isAdmin } from '$lib/stores/auth';
+	import { Search, Plus, Users, Edit, Trash2, Key, Shield, UserX, Loader2, Gift } from 'lucide-svelte';
+	import { auth, isAuthenticated, isAdmin } from '$lib/stores/auth';
 	import { admin, usersList, type UserWithStats } from '$lib/stores/admin';
 
 	let searchQuery = '';
@@ -12,6 +12,7 @@
 	let showCreateModal = false;
 	let showEditModal = false;
 	let showDeleteModal = false;
+	let showGrantCreditsModal = false;
 	let selectedUser: UserWithStats | null = null;
 
 	// Create user form
@@ -27,13 +28,21 @@
 		role: ''
 	};
 
+	// Grant credits form
+	let grantAmount = 1;
+	let grantReason = '';
+
 	let currentPage = 0;
 	const pageSize = 20;
 
 	onMount(async () => {
 		if (!$isAuthenticated) {
-			goto('/login');
-			return;
+			// Try to refresh the token before redirecting to login
+			const authSuccess = await auth.checkAuthWithRefresh();
+			if (!authSuccess) {
+				goto('/login');
+				return;
+			}
 		}
 
 		if (!$isAdmin) {
@@ -121,6 +130,22 @@
 		}
 	}
 
+	async function handleGrantCredits() {
+		if (!selectedUser || grantAmount <= 0) return;
+
+		try {
+			await admin.grantRequestCredits(selectedUser.id, grantAmount, grantReason || 'Admin grant');
+			showGrantCreditsModal = false;
+			selectedUser = null;
+			grantAmount = 1;
+			grantReason = '';
+			await loadUsers();
+		} catch (error) {
+			console.error('Failed to grant credits:', error);
+			alert('Failed to grant credits');
+		}
+	}
+
 	async function invalidateUserSessions(user: UserWithStats) {
 		try {
 			await admin.invalidateUserSessions(user.id);
@@ -143,6 +168,13 @@
 	function openDeleteModal(user: UserWithStats) {
 		selectedUser = user;
 		showDeleteModal = true;
+	}
+
+	function openGrantCreditsModal(user: UserWithStats) {
+		selectedUser = user;
+		showGrantCreditsModal = true;
+		grantAmount = 1;
+		grantReason = '';
 	}
 
 	function formatDate(timestamp: string | number) {
@@ -250,6 +282,9 @@
 								Downloads
 							</th>
 							<th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+								Request Credits
+							</th>
+							<th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
 								Joined
 							</th>
 							<th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
@@ -276,6 +311,12 @@
 								<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
 									{user.download_count}
 								</td>
+								<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+									<div class="flex items-center space-x-2">
+										<Gift class="h-4 w-4 text-primary-400" />
+										<span>{user.request_credits}</span>
+									</div>
+								</td>
 								<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
 									{formatDate(user.created_at)}
 								</td>
@@ -294,6 +335,13 @@
 											title="Invalidate Sessions"
 										>
 											<UserX class="h-4 w-4" />
+										</button>
+										<button
+											on:click={() => openGrantCreditsModal(user)}
+											class="text-primary-400 hover:text-primary-300"
+											title="Grant Request Credits"
+										>
+											<Gift class="h-4 w-4" />
 										</button>
 										<button
 											on:click={() => openDeleteModal(user)}
@@ -329,6 +377,57 @@
 			<p class="text-gray-500">Try adjusting your search criteria</p>
 		</div>
 	{/if}
+
+<!-- Grant Credits Modal -->
+{#if showGrantCreditsModal && selectedUser}
+	<div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+		<div class="bg-dark-900 rounded-xl border border-gray-800 w-full max-w-md">
+			<div class="p-6">
+				<h2 class="text-lg font-semibold text-gray-100 mb-4">
+					Grant Request Credits to {selectedUser.username}
+				</h2>
+				
+				<div class="space-y-4">
+					<div>
+						<label class="block text-sm font-medium text-gray-300 mb-1">Amount</label>
+						<input
+							type="number"
+							bind:value={grantAmount}
+							min="1"
+							max="100"
+							class="input"
+						/>
+					</div>
+					
+					<div>
+						<label class="block text-sm font-medium text-gray-300 mb-1">Reason (optional)</label>
+						<input
+							type="text"
+							bind:value={grantReason}
+							placeholder="e.g., Bonus for active user"
+							class="input"
+						/>
+					</div>
+				</div>
+				
+				<div class="flex space-x-3 pt-4">
+					<button
+						on:click={handleGrantCredits}
+						class="flex-1 btn-primary"
+					>
+						Grant Credits
+					</button>
+					<button
+						on:click={() => showGrantCreditsModal = false}
+						class="flex-1 btn-secondary"
+					>
+						Cancel
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+{/if}
 </div>
 
 <!-- Create User Modal -->
