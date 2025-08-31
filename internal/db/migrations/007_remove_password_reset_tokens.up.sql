@@ -4,11 +4,11 @@
 -- SQLite doesn't support DROP COLUMN, so we need to recreate the table
 -- First, create a new table without the password reset columns
 CREATE TABLE users_new (
-    id INTEGER PRIMARY KEY,
-    username VARCHAR(50) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
+    id BIGINT PRIMARY KEY,
+    username TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
     created_at BIGINT NOT NULL,
-    user_role VARCHAR(20) NOT NULL DEFAULT 'user',
+    user_role TEXT NOT NULL DEFAULT 'user',
     jwt_session_id BIGINT NOT NULL DEFAULT 0,
     request_credits INTEGER NOT NULL DEFAULT 0,
     invite_tokens INTEGER NOT NULL DEFAULT 0

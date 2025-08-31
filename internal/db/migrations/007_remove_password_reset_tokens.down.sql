@@ -4,11 +4,11 @@
 -- SQLite doesn't support ADD COLUMN easily, so we need to recreate the table
 -- First, create a new table with the password reset columns
 CREATE TABLE users_old (
-    id INTEGER PRIMARY KEY,
-    username VARCHAR(50) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
+    id BIGINT PRIMARY KEY,
+    username TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
     created_at BIGINT NOT NULL,
-    user_role VARCHAR(20) NOT NULL DEFAULT 'user',
+    user_role TEXT NOT NULL DEFAULT 'user',
     jwt_session_id BIGINT NOT NULL DEFAULT 0,
     request_credits INTEGER NOT NULL DEFAULT 0,
     invite_tokens INTEGER NOT NULL DEFAULT 1,
