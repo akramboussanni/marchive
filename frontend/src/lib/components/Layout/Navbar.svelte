@@ -118,14 +118,14 @@
 
 			<!-- Mobile Search Button -->
 			<div class="navbar-mobile">
-				<button
-					on:click={() => showSearchModal = true}
-					class="btn-ghost p-2"
-					disabled={!$isAuthenticated}
-					class:opacity-50={!$isAuthenticated}
-				>
-					<Search class="h-5 w-5" />
-				</button>
+				{#if $isAuthenticated}
+					<button
+						on:click={() => showSearchModal = true}
+						class="btn-ghost p-2"
+					>
+						<Search class="h-5 w-5" />
+					</button>
+				{/if}
 			</div>
 
 			<!-- Desktop Navigation - Hidden on mobile -->
@@ -240,20 +240,14 @@
 						<div class="px-3 py-2">
 							<div class="relative">
 								<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-									{#if $isAuthenticated}
-										<Search class="h-5 w-5 text-gray-400" />
-									{:else}
-										<Lock class="h-5 w-5 text-gray-500" />
-									{/if}
+									<Search class="h-5 w-5 text-gray-400" />
 								</div>
 								<input
 									type="text"
 									bind:value={searchQuery}
 									on:keydown={handleKeydown}
-									placeholder={$isAuthenticated ? "Search books..." : "Sign in to search books"}
+									placeholder="Search books..."
 									class="block w-full pl-10 pr-3 py-2 bg-dark-800 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-									class:opacity-50={!$isAuthenticated}
-									disabled={!$isAuthenticated}
 								/>
 							</div>
 						</div>
@@ -270,8 +264,6 @@
 								<span>Downloads</span>
 							</div>
 						</a>
-
-
 
 						{#if $isAdmin}
 							<a
@@ -298,6 +290,28 @@
 							</div>
 						</a>
 
+						<a
+							href="/invites"
+							class="block px-3 py-2 text-base font-medium text-gray-300 hover:bg-dark-800 hover:text-white rounded-md transition-colors"
+							on:click={() => showMobileMenu = false}
+						>
+							<div class="flex items-center space-x-3">
+								<Mail class="h-5 w-5" />
+								<span>Invites</span>
+							</div>
+						</a>
+
+						<a
+							href="/redeem"
+							class="block px-3 py-2 text-base font-medium text-gray-300 hover:bg-dark-800 hover:text-white rounded-md transition-colors"
+							on:click={() => showMobileMenu = false}
+						>
+							<div class="flex items-center space-x-3">
+								<Gift class="h-5 w-5" />
+								<span>Redeem Code</span>
+							</div>
+						</a>
+
 						<button
 							on:click={() => { handleLogout(); showMobileMenu = false; }}
 							class="w-full text-left block px-3 py-2 text-base font-medium text-gray-300 hover:bg-dark-800 hover:text-white rounded-md transition-colors"
@@ -307,6 +321,21 @@
 								<span>Sign Out</span>
 							</div>
 						</button>
+					{:else}
+						<!-- Mobile menu for unauthenticated users -->
+						<div class="px-3 py-4">
+							<div class="text-center">
+								<p class="text-gray-400 text-sm mb-4">Sign in to access downloads and search</p>
+								<a
+									href="/login"
+									class="btn-primary w-full flex items-center justify-center space-x-2"
+									on:click={() => showMobileMenu = false}
+								>
+									<User class="h-5 w-5" />
+									<span>Sign In</span>
+								</a>
+							</div>
+						</div>
 					{/if}
 				</div>
 			</div>

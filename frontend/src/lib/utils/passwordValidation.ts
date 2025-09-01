@@ -1,92 +1,77 @@
-export interface PasswordRequirements {
-	minLength: number;
-	requireLower: boolean;
-	requireUpper: boolean;
-	requireDigit: boolean;
-	requireSpecial: boolean;
-}
-
-export const defaultPasswordRequirements: PasswordRequirements = {
-	minLength: 8,
-	requireLower: true,
-	requireUpper: true,
-	requireDigit: true,
-	requireSpecial: false
-};
-
 export interface PasswordValidationResult {
 	isValid: boolean;
 	errors: string[];
 	requirementsText: string;
 }
 
-export function validatePassword(password: string, requirements: PasswordRequirements = defaultPasswordRequirements): PasswordValidationResult {
+export function validatePassword(password: string): PasswordValidationResult {
 	const errors: string[] = [];
-	
-	if (password.length < requirements.minLength) {
-		errors.push(`Password must be at least ${requirements.minLength} characters long`);
+	const requirements: string[] = [];
+
+	// Check minimum length
+	if (password.length < 8) {
+		errors.push('At least 8 characters');
+	} else {
+		requirements.push('At least 8 characters');
 	}
-	
-	if (requirements.requireLower && !/[a-z]/.test(password)) {
-		errors.push('Password must contain at least one lowercase letter');
+
+	// Check for lowercase letter
+	if (!/[a-z]/.test(password)) {
+		errors.push('One lowercase letter');
+	} else {
+		requirements.push('One lowercase letter');
 	}
-	
-	if (requirements.requireUpper && !/[A-Z]/.test(password)) {
-		errors.push('Password must contain at least one uppercase letter');
+
+	// Check for uppercase letter
+	if (!/[A-Z]/.test(password)) {
+		errors.push('One uppercase letter');
+	} else {
+		requirements.push('One uppercase letter');
 	}
-	
-	if (requirements.requireDigit && !/\d/.test(password)) {
-		errors.push('Password must contain at least one number');
+
+	// Check for number
+	if (!/\d/.test(password)) {
+		errors.push('One number');
+	} else {
+		requirements.push('One number');
 	}
-	
-	if (requirements.requireSpecial && !/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
-		errors.push('Password must contain at least one special character');
+
+	// Check for special character
+	if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+		errors.push('One special character');
+	} else {
+		requirements.push('One special character');
 	}
-	
-	const requirementsText = getPasswordRequirementsText(requirements);
-	
+
 	return {
 		isValid: errors.length === 0,
 		errors,
-		requirementsText
+		requirementsText: requirements.join(', ')
 	};
 }
 
-export function getPasswordRequirementsText(requirements: PasswordRequirements = defaultPasswordRequirements): string {
-	const reqs: string[] = [];
-	
-	reqs.push(`At least ${requirements.minLength} characters`);
-	
-	if (requirements.requireLower) {
-		reqs.push('One lowercase letter');
-	}
-	
-	if (requirements.requireUpper) {
-		reqs.push('One uppercase letter');
-	}
-	
-	if (requirements.requireDigit) {
-		reqs.push('One number');
-	}
-	
-	if (requirements.requireSpecial) {
-		reqs.push('One special character');
-	}
-	
-	return reqs.join(', ');
-}
-
 export function getPasswordStrength(password: string): 'weak' | 'medium' | 'strong' {
-	if (password.length < 6) return 'weak';
-	
+	if (!password) return 'weak';
+
 	let score = 0;
-	if (password.length >= 8) score++;
-	if (/[a-z]/.test(password)) score++;
-	if (/[A-Z]/.test(password)) score++;
-	if (/\d/.test(password)) score++;
-	if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) score++;
-	
-	if (score <= 2) return 'weak';
-	if (score <= 4) return 'medium';
-	return 'strong';
+
+	// Length contribution
+	if (password.length >= 8) score += 1;
+	if (password.length >= 12) score += 1;
+	if (password.length >= 16) score += 1;
+
+	// Character variety contribution
+	if (/[a-z]/.test(password)) score += 1;
+	if (/[A-Z]/.test(password)) score += 1;
+	if (/\d/.test(password)) score += 1;
+	if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) score += 1;
+
+	// Bonus for mixed case and numbers
+	if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score += 1;
+	if (/\d/.test(password) && /[a-zA-Z]/.test(password)) score += 1;
+
+	// Determine strength based on score
+	if (score >= 6) return 'strong';
+	if (score >= 4) return 'medium';
+	return 'weak';
 }
