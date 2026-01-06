@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	AnnasSearchEndpoint   = "https://annas-archive.org/search?q=%s"
-	AnnasDownloadEndpoint = "https://annas-archive.org/dyn/api/fast_download.json?md5=%s&key=%s"
+	AnnasSearchEndpoint   = "https://annas-archive.pm/search?q=%s"
+	AnnasDownloadEndpoint = "https://annas-archive.pm/dyn/api/fast_download.json?md5=%s&key=%s"
 )
 
 func FindBook(query string) ([]*Book, error) {
