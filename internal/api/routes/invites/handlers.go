@@ -1,7 +1,6 @@
 package invites
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/akramboussanni/marchive/internal/api"
@@ -163,16 +162,6 @@ func (ir *InviteRouter) HandleUseInvite(w http.ResponseWriter, r *http.Request) 
 	// Validate request
 	if req.Token == "" || req.Username == "" || req.Password == "" {
 		api.WriteMessage(w, http.StatusBadRequest, "error", "Token, username, and password are required")
-		return
-	}
-
-	// Validate password with detailed requirements
-	valid, errors := utils.ValidatePasswordWithDetails(req.Password, utils.DefaultPasswordRequirements())
-	if !valid {
-		applog.Warn("Invalid password format during registration", "username:", req.Username, "errors:", errors)
-		requirementsText := utils.GetPasswordRequirementsText(utils.DefaultPasswordRequirements())
-		errorMsg := fmt.Sprintf("Password requirements not met. Must have: %s", requirementsText)
-		api.WriteMessage(w, http.StatusBadRequest, "error", errorMsg)
 		return
 	}
 

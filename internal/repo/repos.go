@@ -18,7 +18,6 @@ type Repos struct {
 	Favorite        *FavoriteRepo
 	RequestCredits  *RequestCreditsRepo
 	Invite          *InviteRepo
-	RedemptionCode  *RedemptionCodeRepo
 }
 
 type Columns struct {
@@ -42,7 +41,6 @@ func NewRepos(db *sqlx.DB) *Repos {
 		Favorite:        NewFavoriteRepo(db),
 		RequestCredits:  NewRequestCreditsRepo(db),
 		Invite:          NewInviteRepo(db),
-		RedemptionCode:  NewRedemptionCodeRepo(db),
 	}
 }
 

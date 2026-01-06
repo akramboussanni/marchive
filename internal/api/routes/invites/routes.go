@@ -15,10 +15,11 @@ func NewInviteRoutes(inviteRepo *repo.InviteRepo, userRepo *repo.UserRepo, token
 
 	r.Use(middleware.MaxBytesMiddleware(1 << 20))
 
-	// 15/min + auth for invite management
+	// Admin-only invite management
 	r.Group(func(r chi.Router) {
 		middleware.AddRatelimit(r, 15, 1*time.Minute)
 		middleware.AddAuth(r, userRepo, tokenRepo)
+		r.Use(middleware.AdminOnly)
 		r.Post("/", ir.HandleCreateInvite)
 		r.Get("/", ir.HandleListInvites)
 		r.Post("/{token}/revoke", ir.HandleRevokeInvite)

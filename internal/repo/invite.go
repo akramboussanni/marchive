@@ -101,9 +101,12 @@ func (r *InviteRepo) UseInvite(ctx context.Context, token string, username strin
 	}
 
 	// Check if username is already taken
-	var exists int
-	err = tx.GetContext(ctx, &exists, "SELECT 1 FROM users WHERE username = $1", username)
-	if err == nil {
+	var count int
+	err = tx.GetContext(ctx, &count, "SELECT COUNT(*) FROM users WHERE username = $1", username)
+	if err != nil {
+		return err
+	}
+	if count > 0 {
 		return ErrUsernameTaken
 	}
 

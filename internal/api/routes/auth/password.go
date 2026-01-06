@@ -3,7 +3,6 @@ package auth
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/akramboussanni/marchive/internal/api"
@@ -14,16 +13,6 @@ import (
 
 // shared helper for password change logic
 func (ar *AuthRouter) changeUserPassword(ctx context.Context, w http.ResponseWriter, user *model.User, newPassword, ip string) bool {
-	// Validate password with detailed requirements
-	valid, errors := utils.ValidatePasswordWithDetails(newPassword, utils.DefaultPasswordRequirements())
-	if !valid {
-		applog.Warn("Invalid new password format", "userID:", user.ID, "errors:", errors)
-		requirementsText := utils.GetPasswordRequirementsText(utils.DefaultPasswordRequirements())
-		errorMsg := fmt.Sprintf("Password requirements not met. Must have: %s", requirementsText)
-		api.WriteMessage(w, 400, "error", errorMsg)
-		return false
-	}
-
 	if utils.ComparePassword(user.PasswordHash, newPassword) {
 		applog.Error("Same password")
 		api.WriteMessage(w, 400, "error", "New password must be different from current password")
