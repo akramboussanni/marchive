@@ -6,9 +6,10 @@ import (
 )
 
 type SearchRequest struct {
-	Query  string `json:"query" binding:"required" example:"programming golang"`
-	Limit  int    `json:"limit,omitempty" example:"20"`
-	Offset int    `json:"offset,omitempty" example:"0"`
+	Query      string `json:"query" binding:"required" example:"programming golang"`
+	Limit      int    `json:"limit,omitempty" example:"20"`
+	Offset     int    `json:"offset,omitempty" example:"0"`
+	SearchType string `json:"search_type,omitempty" example:"all"` // "all", "downloaded", "missing"
 }
 
 // BookWithStatus extends anna.Book with availability status
@@ -18,10 +19,12 @@ type BookWithStatus struct {
 }
 
 type SearchResponse struct {
-	Books      []*BookWithStatus `json:"books"`
-	Total      int               `json:"total"`
-	Query      string            `json:"query"`
-	Pagination Pagination        `json:"pagination"`
+	DownloadedBooks []*BookWithStatus `json:"downloaded_books"`
+	MissingBooks    []*BookWithStatus `json:"missing_books"`
+	Total           int               `json:"total"`
+	Query           string            `json:"query"`
+	SearchType      string            `json:"search_type"`
+	Pagination      Pagination        `json:"pagination"`
 }
 
 type Pagination struct {

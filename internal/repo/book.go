@@ -50,7 +50,7 @@ func (r *BookRepo) GetBookByHashForUser(ctx context.Context, hash string, userID
 
 	if !isAdmin {
 		// Non-admin users can only see non-ghost books or their own ghost books
-		query += " AND (is_ghost = false OR (is_ghost = true AND requested_by = $2))"
+		query += " AND (is_ghost = false OR (is_ghost = true AND requested_by IS NOT NULL AND requested_by = $2))"
 		err := r.db.GetContext(ctx, &book, query, hash, userID)
 		return &book, err
 	}
@@ -118,7 +118,7 @@ func (r *BookRepo) GetBooksForUser(ctx context.Context, userID int64, isAdmin bo
 	// Regular users see only non-ghost books or their own ghost books
 	query = fmt.Sprintf(`
 		SELECT %s FROM savedbooks 
-		WHERE (is_ghost = false OR (is_ghost = true AND requested_by = $1))
+		WHERE (is_ghost = false OR (is_ghost = true AND requested_by IS NOT NULL AND requested_by = $1))
 		ORDER BY created_at DESC 
 		LIMIT $2 OFFSET $3
 	`, r.AllRaw)
@@ -130,7 +130,7 @@ func (r *BookRepo) SearchBooks(ctx context.Context, searchQuery string, limit, o
 	var books []model.SavedBook
 	query := fmt.Sprintf(`
 		SELECT %s FROM savedbooks 
-		WHERE (title ILIKE $1 OR authors ILIKE $1 OR publisher ILIKE $1)
+		WHERE (LOWER(title) LIKE LOWER($1) OR LOWER(authors) LIKE LOWER($1) OR LOWER(publisher) LIKE LOWER($1))
 		AND is_ghost = false
 		ORDER BY created_at DESC 
 		LIMIT $2 OFFSET $3
@@ -148,7 +148,7 @@ func (r *BookRepo) SearchBooksForUser(ctx context.Context, userID int64, isAdmin
 		// Admins see all books
 		query := fmt.Sprintf(`
 			SELECT %s FROM savedbooks 
-			WHERE title ILIKE $1 OR authors ILIKE $1 OR publisher ILIKE $1
+			WHERE LOWER(title) LIKE LOWER($1) OR LOWER(authors) LIKE LOWER($1) OR LOWER(publisher) LIKE LOWER($1)
 			ORDER BY created_at DESC 
 			LIMIT $2 OFFSET $3
 		`, r.AllRaw)
@@ -159,8 +159,8 @@ func (r *BookRepo) SearchBooksForUser(ctx context.Context, userID int64, isAdmin
 	// Regular users see only non-ghost books or their own ghost books
 	query := fmt.Sprintf(`
 		SELECT %s FROM savedbooks 
-		WHERE (title ILIKE $1 OR authors ILIKE $1 OR publisher ILIKE $1)
-		AND (is_ghost = false OR (is_ghost = true AND requested_by = $2))
+		WHERE (LOWER(title) LIKE LOWER($1) OR LOWER(authors) LIKE LOWER($1) OR LOWER(publisher) LIKE LOWER($1))
+		AND (is_ghost = false OR (is_ghost = true AND requested_by IS NOT NULL AND requested_by = $2))
 		ORDER BY created_at DESC 
 		LIMIT $3 OFFSET $4
 	`, r.AllRaw)
@@ -182,7 +182,7 @@ func (r *BookRepo) CountBooksForUser(ctx context.Context, userID int64, isAdmin 
 		return count, err
 	}
 
-	err := r.db.GetContext(ctx, &count, "SELECT COUNT(*) FROM savedbooks WHERE (is_ghost = false OR (is_ghost = true AND requested_by = $1))", userID)
+	err := r.db.GetContext(ctx, &count, "SELECT COUNT(*) FROM savedbooks WHERE (is_ghost = false OR (is_ghost = true AND requested_by IS NOT NULL AND requested_by = $1))", userID)
 	return count, err
 }
 
@@ -190,7 +190,7 @@ func (r *BookRepo) CountSearchBooks(ctx context.Context, searchQuery string) (in
 	var count int
 	searchPattern := "%" + searchQuery + "%"
 	err := r.db.GetContext(ctx, &count,
-		"SELECT COUNT(*) FROM savedbooks WHERE title ILIKE $1 OR authors ILIKE $1 OR publisher ILIKE $1",
+		"SELECT COUNT(*) FROM savedbooks WHERE LOWER(title) LIKE LOWER($1) OR LOWER(authors) LIKE LOWER($1) OR LOWER(publisher) LIKE LOWER($1)",
 		searchPattern)
 	return count, err
 }

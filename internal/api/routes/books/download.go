@@ -62,6 +62,15 @@ func (br *BookRouter) HandleRequestDownload(w http.ResponseWriter, r *http.Reque
 				}
 			}
 
+			// Set requested_by if it's not set yet
+			if existingBook.RequestedBy == nil {
+				requestedBy := user.ID
+				err = br.BookRepo.UpdateRequestedBy(r.Context(), req.Hash, &requestedBy)
+				if err != nil {
+					applog.Error("Failed to update requested_by:", err)
+				}
+			}
+
 			err = br.BookRepo.IncrementDownloadCount(r.Context(), req.Hash)
 			if err != nil {
 				applog.Error("Failed to increment download count:", err)

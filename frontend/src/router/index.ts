@@ -20,6 +20,11 @@ const router = createRouter({
           component: () => import('@/views/BookDetailView.vue')
         },
         {
+          path: 'read/:hash',
+          name: 'read',
+          component: () => import('@/views/ReadView.vue')
+        },
+        {
           path: 'login',
           name: 'login',
           component: () => import('@/views/LoginView.vue'),

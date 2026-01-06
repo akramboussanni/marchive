@@ -2,6 +2,7 @@ package books
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/akramboussanni/marchive/internal/api"
 	"github.com/akramboussanni/marchive/internal/applog"
@@ -54,9 +55,26 @@ func (br *BookRouter) HandleDeleteBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get book info first to delete the file
+	book, err := br.BookRepo.GetBookByHash(r.Context(), req.BookHash)
+	if err != nil {
+		applog.Error("Failed to get book:", err)
+		api.WriteInternalError(w)
+		return
+	}
+
+	// Delete the physical file if it exists
+	if book.FilePath != "" {
+		if err := os.Remove(book.FilePath); err != nil && !os.IsNotExist(err) {
+			applog.Error("Failed to delete book file:", err)
+			// Continue anyway to remove from database
+		}
+	}
+
+	// Delete from database
 	err = br.BookRepo.DeleteBook(r.Context(), req.BookHash)
 	if err != nil {
-		applog.Error("Failed to delete book:", err)
+		applog.Error("Failed to delete book from database:", err)
 		api.WriteInternalError(w)
 		return
 	}
@@ -113,11 +131,6 @@ func (br *BookRouter) HandleGetBookDetail(w http.ResponseWriter, r *http.Request
 		book, err = br.BookRepo.GetBookByHashForUser(r.Context(), hash, userID, isAdmin)
 	} else {
 		book, err = br.BookRepo.GetBookByHash(r.Context(), hash)
-		// Non-authenticated users can't see ghost books
-		if err == nil && book.IsGhost {
-			api.WriteMessage(w, http.StatusNotFound, "error", "book not found")
-			return
-		}
 	}
 
 	if err != nil {

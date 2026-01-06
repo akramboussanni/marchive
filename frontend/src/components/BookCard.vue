@@ -50,7 +50,7 @@
           class="action-btn add-btn full-width"
           @click="$emit('addToLibrary', book)"
           :disabled="isDownloading || isAvailable"
-          :title="isAvailable ? 'Already in library' : 'Add to Marchive'"
+          :title="isAvailable ? 'Already in library' : 'Add to mArchive'"
         >
           <svg v-if="!isDownloading && !isAvailable" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -63,7 +63,7 @@
           <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="20 6 9 17 4 12"></polyline>
           </svg>
-          <span v-if="!isDownloading && !isAvailable">Add to Marchive</span>
+          <span v-if="!isDownloading && !isAvailable">Add to mArchive</span>
           <span v-else-if="isDownloading">Adding...</span>
           <span v-else>Already Added</span>
         </button>
@@ -71,16 +71,16 @@
       
       <template v-else>
         <button 
-          class="action-btn full-width open-btn"
-          @click="$emit('open', book)"
-          :disabled="book.status !== 'ready'"
-          title="Open book"
+          class="action-btn full-width read-btn"
+          @click="$emit('read', book)"
+          :disabled="!canRead"
+          :title="canRead ? 'Read book in browser' : 'Only PDF and EPUB formats can be read in browser'"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
             <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
           </svg>
-          <span>Open</span>
+          <span>Read</span>
         </button>
 
         <div class="action-row">
@@ -196,6 +196,7 @@ defineEmits<{
   toggleFavorite: [book: Book]
   download: [book: Book]
   open: [book: Book]
+  read: [book: Book]
   addToLibrary: [book: Book]
   edit: [book: Book]
   delete: [book: Book]
@@ -207,6 +208,11 @@ const imageError = ref(false)
 const showMenu = ref(false)
 
 const isAvailable = computed(() => props.book.status === 'ready')
+
+const canRead = computed(() => {
+  const format = props.book.format?.toLowerCase() || ''
+  return props.book.status === 'ready' && (format === 'pdf' || format === 'epub')
+})
 
 const handleImageError = () => {
   imageError.value = true
@@ -319,6 +325,27 @@ onUnmounted(() => {
 
 .status-badge .spinner {
   animation: spin 1s linear infinite;
+}
+
+.ghost-badge {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.375rem;
+  border-radius: 6px;
+  background: rgba(147, 51, 234, 0.9);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(147, 51, 234, 0.4);
+  z-index: 10;
+}
+
+.ghost-badge svg {
+  width: 16px;
+  height: 16px;
+  color: #e9d5ff;
 }
 
 .no-cover {
@@ -516,6 +543,26 @@ onUnmounted(() => {
 
 .add-btn:disabled {
   opacity: 0.6;
+}
+
+.read-btn {
+  font-size: 0.9rem;
+  font-weight: 500;
+  background: rgba(147, 51, 234, 0.1);
+  border-color: rgba(147, 51, 234, 0.3);
+  color: #a78bfa;
+}
+
+.read-btn:hover:not(:disabled) {
+  background: rgba(147, 51, 234, 0.2);
+  border-color: rgba(147, 51, 234, 0.5);
+  color: #c4b5fd;
+}
+
+.read-btn:disabled {
+  opacity: 0.4;
+  color: #64748b;
+  border-color: rgba(100, 116, 139, 0.2);
 }
 
 .favorite-btn.favorited {

@@ -22,6 +22,30 @@
               @clear="clearSearch"
             />
 
+            <!-- Search Type Filter -->
+            <div class="search-filters">
+              <button 
+                @click="searchType = 'all'" 
+                :class="['filter-btn', { active: searchType === 'all' }]"
+              >
+                All Books
+              </button>
+              <button 
+                @click="searchType = 'downloaded'" 
+                :class="['filter-btn', { active: searchType === 'downloaded' }]"
+              >
+                In Library
+              </button>
+              <button 
+                @click="!authStore.isAuthenticated ? null : searchType = 'missing'" 
+                :class="['filter-btn', { active: searchType === 'missing', disabled: !authStore.isAuthenticated }]"
+                :disabled="!authStore.isAuthenticated"
+                :title="!authStore.isAuthenticated ? 'Login required to search for new books' : ''"
+              >
+                To Download
+              </button>
+            </div>
+
             <div v-if="searchError" class="search-error">
               {{ searchError }}
             </div>
@@ -31,7 +55,7 @@
               <p>Searching...</p>
             </div>
 
-            <div v-else-if="currentSearchQuery && searchResults.length === 0 && !searchError" class="empty-state">
+            <div v-else-if="currentSearchQuery && (downloadedBooks.length === 0 && missingBooks.length === 0) && !searchError" class="empty-state">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="11" cy="11" r="8"></circle>
                 <path d="m21 21-4.35-4.35"></path>
@@ -39,23 +63,56 @@
               <p>No results found for "{{ currentSearchQuery }}"</p>
             </div>
 
-            <div v-else-if="searchResults.length > 0" class="results-container">
+            <div v-else-if="downloadedBooks.length > 0 || missingBooks.length > 0" class="results-container">
               <div class="results-header">
                 <span class="result-count">
                   {{ searchPagination.total }} {{ searchPagination.total === 1 ? 'result' : 'results' }} for "{{ currentSearchQuery }}"
                 </span>
               </div>
 
-              <div class="books-grid">
-                <BookCard 
-                  v-for="book in searchResults"
-                  :key="book.hash"
-                  :book="book"
-                  :is-available="book.status === 'available'"
-                  :is-downloading="downloadingBooks.has(book.hash)"
-                  action-mode="add"
-                  @add-to-library="handleAddToLibrary"
-                />
+              <!-- Downloaded Books Section -->
+              <div v-if="downloadedBooks.length > 0 && (searchType === 'all' || searchType === 'downloaded')" class="books-section">
+                <h3 class="section-title">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                  In Your Library ({{ downloadedBooks.length }})
+                </h3>
+                <div class="books-grid">
+                  <BookCard 
+                    v-for="book in downloadedBooks"
+                    :key="book.hash"
+                    :book="book"
+                    :is-available="book.status === 'available'"
+                    :is-downloading="downloadingBooks.has(book.hash)"
+                    action-mode="full"
+                  />
+                </div>
+              </div>
+
+              <!-- Missing Books Section -->
+              <div v-if="missingBooks.length > 0 && (searchType === 'all' || searchType === 'missing')" class="books-section">
+                <h3 class="section-title">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  Available to Download ({{ missingBooks.length }})
+                  <span v-if="!authStore.isAuthenticated" class="login-required-badge">Login required to add books</span>
+                </h3>
+                <div class="books-grid">
+                  <BookCard 
+                    v-for="book in missingBooks"
+                    :key="book.hash"
+                    :book="book"
+                    :is-available="false"
+                    :is-downloading="downloadingBooks.has(book.hash)"
+                    :action-mode="authStore.isAuthenticated ? 'add' : undefined"
+                    @add-to-library="handleAddToLibrary"
+                  />
+                </div>
               </div>
 
               <div v-if="searchPagination.has_next" class="load-more">
@@ -74,7 +131,7 @@
     <Transition name="modal">
       <div v-if="showGhostModeDialog" class="modal-overlay" @click="cancelAddToLibrary">
         <div class="ghost-dialog" @click.stop>
-          <h3>Add to Marchive</h3>
+          <h3>Add to mArchive</h3>
           <p class="dialog-description">Choose how to add this book to your library:</p>
           
           <div class="ghost-mode-option">
@@ -143,7 +200,9 @@ const authStore = useAuthStore()
 
 const searchQuery = ref('')
 const currentSearchQuery = ref('')
-const searchResults = ref<Book[]>([])
+const searchType = ref<'all' | 'downloaded' | 'missing'>('all')
+const downloadedBooks = ref<Book[]>([])
+const missingBooks = ref<Book[]>([])
 const searching = ref(false)
 const searchError = ref('')
 const loadingMore = ref(false)
@@ -187,9 +246,9 @@ const confirmAddToLibrary = async (isGhost: boolean) => {
     })
     
     // Update book status in results based on response
-    const bookIndex = searchResults.value.findIndex(b => b.hash === selectedBook.value!.hash)
-    if (bookIndex !== -1 && searchResults.value[bookIndex]) {
-      searchResults.value[bookIndex]!.status = response.status || 'processing'
+    const bookIndex = missingBooks.value.findIndex(b => b.hash === selectedBook.value!.hash)
+    if (bookIndex !== -1 && missingBooks.value[bookIndex]) {
+      missingBooks.value[bookIndex]!.status = response.status || 'processing'
     }
     
     // Close the modal and navigate to home
@@ -221,14 +280,16 @@ const handleSearch = async (query?: string) => {
     searching.value = true
     searchError.value = ''
     
-    const response = await booksApi.searchBooks(searchTerm, 20, 0)
-    searchResults.value = response.books
+    const response = await booksApi.searchBooks(searchTerm, 20, 0, searchType.value)
+    downloadedBooks.value = response.downloaded_books
+    missingBooks.value = response.missing_books
     searchPagination.value = response.pagination
     currentSearchQuery.value = searchTerm
   } catch (error: any) {
     console.error('Failed to search books:', error)
     searchError.value = error.response?.data?.message || 'Failed to search books. Please try again.'
-    searchResults.value = []
+    downloadedBooks.value = []
+    missingBooks.value = []
   } finally {
     searching.value = false
   }
@@ -236,7 +297,8 @@ const handleSearch = async (query?: string) => {
 
 const clearSearch = () => {
   searchQuery.value = ''
-  searchResults.value = []
+  downloadedBooks.value = []
+  missingBooks.value = []
   currentSearchQuery.value = ''
   searchError.value = ''
   searchPagination.value = {
@@ -253,8 +315,9 @@ const loadMoreSearchResults = async () => {
   try {
     loadingMore.value = true
     const newOffset = searchPagination.value.offset + searchPagination.value.limit
-    const response = await booksApi.searchBooks(currentSearchQuery.value, 20, newOffset)
-    searchResults.value.push(...response.books)
+    const response = await booksApi.searchBooks(currentSearchQuery.value, 20, newOffset, searchType.value)
+    downloadedBooks.value.push(...response.downloaded_books)
+    missingBooks.value.push(...response.missing_books)
     searchPagination.value = response.pagination
   } catch (error) {
     console.error('Failed to load more search results:', error)
@@ -277,6 +340,13 @@ watch(() => props.isOpen, (isOpen) => {
     }
     document.addEventListener('keydown', handleEscape)
     return () => document.removeEventListener('keydown', handleEscape)
+  }
+})
+
+// Trigger new search when filter changes
+watch(searchType, () => {
+  if (currentSearchQuery.value) {
+    handleSearch(currentSearchQuery.value)
   }
 })
 </script>
@@ -355,6 +425,53 @@ watch(() => props.isOpen, (isOpen) => {
   flex: 1;
 }
 
+.search-filters {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.5rem;
+  background: rgba(30, 41, 59, 0.5);
+  border-radius: 12px;
+  border: 1px solid rgba(71, 85, 105, 0.3);
+}
+
+.filter-btn {
+  flex: 1;
+  padding: 0.625rem 1rem;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: #94a3b8;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-btn:hover {
+  background: rgba(59, 130, 246, 0.1);
+  color: #60a5fa;
+}
+
+.filter-btn.active {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #60a5fa;
+}
+
+.filter-btn.disabled,
+.filter-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  color: #64748b;
+}
+
+.filter-btn.disabled:hover,
+.filter-btn:disabled:hover {
+  background: transparent;
+  color: #64748b;
+}
+
 .search-error {
   padding: 0.75rem 1rem;
   background: rgba(239, 68, 68, 0.1);
@@ -412,6 +529,44 @@ watch(() => props.isOpen, (isOpen) => {
 .result-count {
   font-size: 0.9rem;
   color: #64748b;
+}
+
+.books-section {
+  margin-bottom: 2.5rem;
+}
+
+.books-section:last-child {
+  margin-bottom: 0;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin: 0 0 1.25rem 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(71, 85, 105, 0.3);
+  flex-wrap: wrap;
+}
+
+.section-title svg {
+  width: 22px;
+  height: 22px;
+  color: #60a5fa;
+}
+
+.login-required-badge {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #94a3b8;
+  background: rgba(100, 116, 139, 0.2);
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  border: 1px solid rgba(100, 116, 139, 0.3);
+  margin-left: auto;
 }
 
 .books-grid {

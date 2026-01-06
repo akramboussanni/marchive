@@ -16,7 +16,17 @@ export default defineConfig({
   },
   build: {
     outDir: '../static',
-    emptyOutDir: true
+    emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'pdfjs': ['pdfjs-dist']
+        }
+      }
+    }
+  },
+  optimizeDeps: {
+    include: ['pdfjs-dist']
   },
   server: {
     proxy: {

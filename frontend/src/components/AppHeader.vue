@@ -2,12 +2,11 @@
   <header class="app-header">
     <div class="header-container">
       <router-link to="/" class="logo">
-        <span class="logo-text">Marchive</span>
+        <span class="logo-text">mArchive</span>
       </router-link>
 
       <div class="search-container">
         <button 
-          v-if="authStore.isAuthenticated"
           @click="openSearch"
           class="search-trigger"
         >
@@ -16,15 +15,7 @@
             <path d="m21 21-4.35-4.35"></path>
           </svg>
           <span>Search books...</span>
-          <kbd class="kbd">Ctrl K</kbd>
         </button>
-        <router-link v-else to="/login" class="search-placeholder">
-          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"></circle>
-            <path d="m21 21-4.35-4.35"></path>
-          </svg>
-          <span>Search books (login required)</span>
-        </router-link>
       </div>
 
       <nav class="nav-links">

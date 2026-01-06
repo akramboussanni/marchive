@@ -43,12 +43,14 @@ func (br *BookRouter) HandleExplore(w http.ResponseWriter, r *http.Request) {
 	var err error
 
 	if hasUser {
+		applog.Info("Getting books for user", "userID", userID, "isAdmin", isAdmin)
 		books, err = br.BookRepo.GetBooksForUser(r.Context(), userID, isAdmin, limit, offset)
 		if err != nil {
 			applog.Error("Failed to get books:", err)
 			api.WriteInternalError(w)
 			return
 		}
+		applog.Info("Retrieved books", "count", len(books))
 
 		total, err = br.BookRepo.CountBooksForUser(r.Context(), userID, isAdmin)
 	} else {

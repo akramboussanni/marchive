@@ -3,8 +3,8 @@ import type { BookListResponse, FavoritesResponse, ToggleFavoriteRequest, Toggle
 
 export const booksApi = {
   // Search for books
-  async searchBooks(query: string, limit = 20, offset = 0): Promise<SearchResponse> {
-    const response = await apiClient.post('/books/search', { query, limit, offset } as SearchRequest)
+  async searchBooks(query: string, limit = 20, offset = 0, searchType: 'all' | 'downloaded' | 'missing' = 'all'): Promise<SearchResponse> {
+    const response = await apiClient.post('/books/search', { query, limit, offset, search_type: searchType } as SearchRequest)
     return response.data
   },
 

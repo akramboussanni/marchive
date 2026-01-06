@@ -23,6 +23,7 @@
             @toggle-favorite="handleToggleFavorite"
             @download="handleDownload"
             @open="handleOpen"
+            @read="handleRead"
           />
         </div>
       </section>
@@ -64,6 +65,7 @@
             @toggle-favorite="handleToggleFavorite"
             @download="handleDownload"
             @open="handleOpen"
+            @read="handleRead"
             @view="handleViewBook"
             @edit="handleEditBook"
             @delete="handleDeleteBook"
@@ -125,7 +127,7 @@ const books = ref<Book[]>([])
 const loadingBooks = ref(false)
 const loadingMore = ref(false)
 const downloadingBooks = ref(new Set<string>())
-let refreshInterval: number | null = null
+let refreshInterval: ReturnType<typeof setInterval> | null = null
 
 const toastRef = ref<InstanceType<typeof NotificationToast> | null>(null)
 
@@ -281,6 +283,10 @@ const handleDownload = async (book: Book) => {
 const handleOpen = (book: Book) => {
   // This will be implemented later
   console.log('Open book:', book.title)
+}
+
+const handleRead = (book: Book) => {
+  router.push(`/read/${book.hash}`)
 }
 
 const handleViewBook = (book: Book) => {

@@ -45,8 +45,20 @@
           <div class="book-actions">
             <button 
               v-if="book.status === 'ready'"
+              @click="handleRead"
+              class="primary-action-btn read-action"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+              </svg>
+              <span>Read Book</span>
+            </button>
+
+            <button 
+              v-if="book.status === 'ready'"
               @click="handleDownload"
-              class="primary-action-btn"
+              class="secondary-action-btn"
               :disabled="downloading"
             >
               <svg v-if="!downloading" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -57,7 +69,7 @@
               <svg v-else class="spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10"></circle>
               </svg>
-              <span v-if="!downloading">Download Book</span>
+              <span v-if="!downloading">Download</span>
               <span v-else>Downloading...</span>
             </button>
 
@@ -87,6 +99,47 @@
               </svg>
               <span>{{ isFavorited ? 'Remove from Favorites' : 'Add to Favorites' }}</span>
             </button>
+
+            <button 
+              @click="handleCopyLink"
+              class="secondary-action-btn"
+              :class="{ copied: linkCopied }"
+            >
+              <svg v-if="!linkCopied" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+              </svg>
+              <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>{{ linkCopied ? 'Link Copied!' : 'Copy Link' }}</span>
+            </button>
+
+            <div v-if="authStore.user?.role === 'admin'" class="admin-actions">
+              <button 
+                @click="handleToggleGhostMode"
+                class="admin-action-btn"
+                :disabled="updatingGhost"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2a7 7 0 0 0-7 7v3l-2 2v5h18v-5l-2-2V9a7 7 0 0 0-7-7z"></path>
+                  <path d="M8.5 19a4 4 0 0 0 7 0"></path>
+                </svg>
+                <span>{{ book.is_ghost ? 'Disable Ghost Mode' : 'Enable Ghost Mode' }}</span>
+              </button>
+
+              <button 
+                @click="handleDeleteBook"
+                class="admin-action-btn delete-btn"
+                :disabled="deleting"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+                <span>{{ deleting ? 'Deleting...' : 'Delete Book' }}</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -129,7 +182,7 @@
 
             <div class="metadata-item">
               <span class="metadata-label">Downloads</span>
-              <span class="metadata-value">{{ book.download_count || 0 }}</span>
+              <span class="metadata-value">{{ book.download_count ?? 0 }}</span>
             </div>
 
             <div class="metadata-item" v-if="book.created_at">
@@ -165,6 +218,9 @@ const loading = ref(false)
 const error = ref('')
 const downloading = ref(false)
 const isFavorited = ref(false)
+const linkCopied = ref(false)
+const updatingGhost = ref(false)
+const deleting = ref(false)
 
 const loadBookDetail = async () => {
   const hash = route.params.hash as string
@@ -258,6 +314,60 @@ const handleToggleFavorite = async () => {
     isFavorited.value = response.is_favorited
   } catch (error) {
     console.error('Failed to toggle favorite:', error)
+  }
+}
+
+const handleRead = () => {
+  if (book.value) {
+    router.push(`/read/${book.value.hash}`)
+  }
+}
+
+const handleCopyLink = async () => {
+  if (!book.value) return
+  
+  try {
+    const url = `${window.location.origin}/book/${book.value.hash}`
+    await navigator.clipboard.writeText(url)
+    linkCopied.value = true
+    setTimeout(() => {
+      linkCopied.value = false
+    }, 2000)
+  } catch (error) {
+    console.error('Failed to copy link:', error)
+  }
+}
+
+const handleToggleGhostMode = async () => {
+  if (!book.value) return
+
+  try {
+    updatingGhost.value = true
+    await booksApi.updateGhostMode(book.value.hash, !book.value.is_ghost)
+    book.value.is_ghost = !book.value.is_ghost
+  } catch (error) {
+    console.error('Failed to toggle ghost mode:', error)
+  } finally {
+    updatingGhost.value = false
+  }
+}
+
+const handleDeleteBook = async () => {
+  if (!book.value) return
+
+  if (!confirm(`Are you sure you want to delete "${book.value.title}"? This action cannot be undone.`)) {
+    return
+  }
+
+  try {
+    deleting.value = true
+    await booksApi.deleteBook(book.value.hash)
+    router.push('/')
+  } catch (error: any) {
+    console.error('Failed to delete book:', error)
+    alert(error.response?.data?.message || 'Failed to delete book')
+  } finally {
+    deleting.value = false
   }
 }
 
@@ -430,6 +540,17 @@ onMounted(() => {
   border: 1px solid rgba(59, 130, 246, 0.3);
 }
 
+.primary-action-btn.read-action {
+  background: rgba(147, 51, 234, 0.2);
+  color: #a78bfa;
+  border-color: rgba(147, 51, 234, 0.3);
+}
+
+.primary-action-btn.read-action:hover:not(:disabled) {
+  background: rgba(147, 51, 234, 0.3);
+  border-color: rgba(147, 51, 234, 0.5);
+}
+
 .primary-action-btn:hover:not(:disabled) {
   background: rgba(59, 130, 246, 0.3);
   border-color: rgba(59, 130, 246, 0.5);
@@ -457,9 +578,66 @@ onMounted(() => {
   background: rgba(236, 72, 153, 0.1);
 }
 
+.secondary-action-btn.copied {
+  color: #10b981;
+  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.1);
+}
+
 .secondary-action-btn.favorited:hover {
   background: rgba(236, 72, 153, 0.2);
   color: #f472b6;
+}
+
+.admin-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.admin-action-btn {
+  padding: 0.875rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid rgba(147, 51, 234, 0.3);
+  background: rgba(147, 51, 234, 0.1);
+  color: #a78bfa;
+}
+
+.admin-action-btn:hover:not(:disabled) {
+  background: rgba(147, 51, 234, 0.2);
+  border-color: rgba(147, 51, 234, 0.5);
+}
+
+.admin-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-action-btn.delete-btn {
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+}
+
+.admin-action-btn.delete-btn:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.admin-action-btn svg {
+  width: 18px;
+  height: 18px;
 }
 
 .primary-action-btn svg,

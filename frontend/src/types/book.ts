@@ -37,12 +37,15 @@ export interface SearchRequest {
   query: string
   limit?: number
   offset?: number
+  search_type?: 'all' | 'downloaded' | 'missing'
 }
 
 export interface SearchResponse {
-  books: Book[]
+  downloaded_books: Book[]
+  missing_books: Book[]
   total: number
   query: string
+  search_type: string
   pagination: Pagination
 }
 
