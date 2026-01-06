@@ -6,18 +6,23 @@
       </router-link>
 
       <div class="search-container">
-        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8"></circle>
-          <path d="m21 21-4.35-4.35"></path>
-        </svg>
-        <input
+        <button 
           v-if="authStore.isAuthenticated"
-          type="text"
-          placeholder="Search books..."
-          class="search-input"
-          v-model="searchQuery"
-        />
-        <router-link v-else to="/login" class="search-input-placeholder">
+          @click="openSearch"
+          class="search-trigger"
+        >
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
+          <span>Search books...</span>
+          <kbd class="kbd">Ctrl K</kbd>
+        </button>
+        <router-link v-else to="/login" class="search-placeholder">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
           <span>Search books (login required)</span>
         </router-link>
       </div>
@@ -83,18 +88,43 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
 const authStore = useAuthStore()
-const searchQuery = ref('')
+
+const emit = defineEmits<{
+  openSearch: []
+}>()
 
 async function handleLogout() {
   await authStore.logout()
   router.push('/login')
 }
+
+function openSearch() {
+  emit('openSearch')
+}
+
+// Keyboard shortcut for search (Ctrl+K)
+const handleKeydown = (e: KeyboardEvent) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+    e.preventDefault()
+    if (authStore.isAuthenticated) {
+      openSearch()
+    }
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('keydown', handleKeydown)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeydown)
+})
 </script>
 
 <style scoped>
@@ -140,46 +170,54 @@ async function handleLogout() {
 .search-container {
   flex: 1;
   max-width: 600px;
-  position: relative;
   margin: 0 auto;
 }
 
-.search-icon {
-  position: absolute;
-  left: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 20px;
-  height: 20px;
-  color: #64748b;
-  pointer-events: none;
-}
-
-.search-input {
+.search-trigger {
   width: 100%;
-  padding: 0.75rem 1rem 0.75rem 3rem;
+  padding: 0.625rem 0.875rem;
   background: rgba(15, 23, 42, 0.6);
   border: 1px solid rgba(59, 130, 246, 0.2);
   border-radius: 12px;
-  color: #e2e8f0;
-  font-size: 0.95rem;
-  transition: all 0.3s ease;
-  outline: none;
-}
-
-.search-input::placeholder {
   color: #64748b;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  text-align: left;
 }
 
-.search-input:focus {
+.search-trigger:hover {
   background: rgba(15, 23, 42, 0.8);
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.4);
 }
 
-.search-input-placeholder {
+.search-trigger .search-icon {
+  width: 18px;
+  height: 18px;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.search-trigger span {
+  flex: 1;
+}
+
+.kbd {
+  padding: 0.25rem 0.5rem;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-family: monospace;
+  color: #94a3b8;
+}
+
+.search-placeholder {
   width: 100%;
-  padding: 0.75rem 1rem 0.75rem 3rem;
+  padding: 0.625rem 0.875rem 0.625rem 2.75rem;
   background: rgba(15, 23, 42, 0.3);
   border: 1px solid rgba(59, 130, 246, 0.1);
   border-radius: 12px;
@@ -190,11 +228,20 @@ async function handleLogout() {
   align-items: center;
   transition: all 0.3s ease;
   cursor: pointer;
+  position: relative;
 }
 
-.search-input-placeholder:hover {
+.search-placeholder:hover {
   background: rgba(15, 23, 42, 0.5);
   border-color: rgba(59, 130, 246, 0.2);
+}
+
+.search-placeholder .search-icon {
+  position: absolute;
+  left: 0.875rem;
+  width: 18px;
+  height: 18px;
+  color: #64748b;
 }
 
 .nav-links {
@@ -265,16 +312,15 @@ async function handleLogout() {
     flex-basis: 100%;
   }
 
-  .search-input,
-  .search-input-placeholder {
+  .search-placeholder {
     font-size: 0.9rem;
-    padding: 0.625rem 1rem 0.625rem 2.75rem;
+    padding: 0.625rem 0.875rem 0.625rem 2.5rem;
   }
 
-  .search-icon {
-    width: 18px;
-    height: 18px;
-    left: 0.875rem;
+  .search-placeholder .search-icon {
+    width: 16px;
+    height: 16px;
+    left: 0.75rem;
   }
 
   .nav-links {
@@ -304,16 +350,15 @@ async function handleLogout() {
     font-size: 1.125rem;
   }
 
-  .search-input,
-  .search-input-placeholder {
+  .search-placeholder {
     font-size: 0.875rem;
-    padding: 0.5rem 0.875rem 0.5rem 2.5rem;
+    padding: 0.5rem 0.75rem 0.5rem 2.25rem;
   }
 
-  .search-icon {
-    width: 16px;
-    height: 16px;
-    left: 0.75rem;
+  .search-placeholder .search-icon {
+    width: 14px;
+    height: 14px;
+    left: 0.625rem;
   }
 
   .nav-link {

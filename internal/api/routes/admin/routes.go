@@ -6,6 +6,7 @@ import (
 
 	"github.com/akramboussanni/marchive/internal/middleware"
 	"github.com/akramboussanni/marchive/internal/repo"
+	"github.com/akramboussanni/marchive/internal/services"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -15,15 +16,17 @@ type AdminRouter struct {
 	BookRepo            *repo.BookRepo
 	DownloadRequestRepo *repo.DownloadRequestRepo
 	RequestCreditsRepo  *repo.RequestCreditsRepo
+	UserService         *services.UserService
 }
 
-func NewAdminRouter(repos *repo.Repos) http.Handler {
+func NewAdminRouter(repos *repo.Repos, userService *services.UserService) http.Handler {
 	ar := &AdminRouter{
 		UserRepo:            repos.User,
 		TokenRepo:           repos.Token,
 		BookRepo:            repos.Book,
 		DownloadRequestRepo: repos.DownloadRequest,
 		RequestCreditsRepo:  repos.RequestCredits,
+		UserService:         userService,
 	}
 	r := chi.NewRouter()
 

@@ -45,41 +45,70 @@ func (br *BookRouter) HandleRequestDownload(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	if !canDownload {
+	if !canDownload && user.Role != "admin" {
 		api.WriteMessage(w, http.StatusTooManyRequests, "error", "daily download limit reached")
 		return
 	}
 
 	existingBook, err := br.BookRepo.GetBookByHash(r.Context(), req.Hash)
-	if err == nil && existingBook.Status == model.BookStatusReady {
-		err = br.BookRepo.IncrementDownloadCount(r.Context(), req.Hash)
-		if err != nil {
-			applog.Error("Failed to increment download count:", err)
+	if err == nil {
+		// Book exists
+		if existingBook.Status == model.BookStatusReady {
+			// If book is ready and was in ghost mode, but user wants it public, disable ghost mode
+			if existingBook.IsGhost && !req.IsGhost {
+				err = br.BookRepo.UpdateGhostMode(r.Context(), req.Hash, false)
+				if err != nil {
+					applog.Error("Failed to update ghost mode:", err)
+				}
+			}
+
+			err = br.BookRepo.IncrementDownloadCount(r.Context(), req.Hash)
+			if err != nil {
+				applog.Error("Failed to increment download count:", err)
+			}
+
+			response := DownloadResponse{
+				JobID:   0,
+				Status:  "ready",
+				Message: "Book is already available for download",
+			}
+			api.WriteJSON(w, http.StatusOK, response)
+			return
+		} else if existingBook.IsGhost && !req.IsGhost {
+			// Book exists but is processing/error in ghost mode, user wants it public
+			err = br.BookRepo.UpdateGhostMode(r.Context(), req.Hash, false)
+			if err != nil {
+				applog.Error("Failed to update ghost mode:", err)
+			}
 		}
 
-		response := DownloadResponse{
-			JobID:   0,
-			Status:  "ready",
-			Message: "Book is already available for download",
+		// Set requested_by if it's not set yet
+		if existingBook.RequestedBy == nil {
+			requestedBy := user.ID
+			err = br.BookRepo.UpdateRequestedBy(r.Context(), req.Hash, &requestedBy)
+			if err != nil {
+				applog.Error("Failed to update requested_by:", err)
+			}
 		}
-		api.WriteJSON(w, http.StatusOK, response)
-		return
 	}
 
 	if err != nil {
+		requestedBy := user.ID
 		newBook := &model.SavedBook{
-			Hash:      req.Hash,
-			Title:     req.Title,
-			Authors:   req.Authors,
-			Publisher: req.Publisher,
-			Language:  req.Language,
-			Format:    req.Format,
-			Size:      req.Size,
-			CoverURL:  req.CoverURL,
-			CoverData: req.CoverData,
-			Status:    model.BookStatusProcessing,
-			CreatedAt: utils.GenerateSnowflakeID(),
-			UpdatedAt: utils.GenerateSnowflakeID(),
+			Hash:        req.Hash,
+			Title:       req.Title,
+			Authors:     req.Authors,
+			Publisher:   req.Publisher,
+			Language:    req.Language,
+			Format:      req.Format,
+			Size:        req.Size,
+			CoverURL:    req.CoverURL,
+			CoverData:   req.CoverData,
+			Status:      model.BookStatusProcessing,
+			IsGhost:     req.IsGhost,
+			RequestedBy: &requestedBy,
+			CreatedAt:   utils.GenerateSnowflakeID(),
+			UpdatedAt:   utils.GenerateSnowflakeID(),
 		}
 
 		err = br.BookRepo.CreateBook(r.Context(), newBook)
@@ -158,6 +187,12 @@ func (br *BookRouter) HandleDownloadFile(w http.ResponseWriter, r *http.Request)
 		applog.Error("Book file not found on disk:", book.FilePath)
 		api.WriteMessage(w, http.StatusNotFound, "error", "book file not available")
 		return
+	}
+
+	// Increment download count
+	err = br.BookRepo.IncrementDownloadCount(r.Context(), hash)
+	if err != nil {
+		applog.Error("Failed to increment download count:", err)
 	}
 
 	filename := filepath.Base(book.FilePath)

@@ -1,6 +1,5 @@
 <template>
   <div class="profile-view">
-    <AppHeader />
     <main class="content">
       <div class="profile-header">
         <div class="avatar">
@@ -39,7 +38,6 @@
 
 <script setup lang="ts">
 import { useAuthStore } from '@/stores/auth'
-import AppHeader from '@/components/AppHeader.vue'
 
 const authStore = useAuthStore()
 

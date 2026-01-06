@@ -33,16 +33,8 @@ func (ir *InviteRouter) HandleListInvites(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	tokens, err := ir.InviteRepo.GetUserInviteTokens(r.Context(), user.ID)
-	if err != nil {
-		applog.Error("Failed to get user invite tokens:", err)
-		api.WriteInternalError(w)
-		return
-	}
-
 	response := model.InviteListResponse{
 		Invites: invites,
-		Tokens:  tokens,
 	}
 
 	api.WriteJSON(w, http.StatusOK, response)

@@ -9,6 +9,7 @@ require (
 	github.com/gocolly/colly/v2 v2.2.0
 	github.com/google/go-querystring v1.1.0
 	github.com/swaggo/http-swagger v1.3.4
+	github.com/swaggo/swag v1.16.5
 	go.uber.org/zap v1.27.0
 )
 
@@ -35,7 +36,6 @@ require (
 	github.com/nlnwa/whatwg-url v0.6.1 // indirect
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d // indirect
 	github.com/swaggo/files v1.0.1 // indirect
-	github.com/swaggo/swag v1.16.5 // indirect
 	github.com/temoto/robotstxt v1.1.2 // indirect
 	github.com/zeebo/xxh3 v1.0.2 // indirect
 	go.uber.org/multierr v1.10.0 // indirect

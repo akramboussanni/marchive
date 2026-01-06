@@ -25,10 +25,16 @@ func Init(dsn string) {
 	log.Println("using sqlite db")
 
 	var err error
-	DB, err = sqlx.Open("sqlite", "marchive.db")
+	// Add WAL mode and busy timeout to DSN for better concurrency
+	DB, err = sqlx.Open("sqlite", "marchive.db?_journal_mode=WAL&_busy_timeout=5000&_synchronous=NORMAL")
 	if err != nil {
 		log.Fatalf("cannot open database: %v", err)
 	}
+
+	// Set connection pool settings for SQLite
+	DB.SetMaxOpenConns(1) // SQLite works best with a single writer
+	DB.SetMaxIdleConns(1)
+
 	if err = DB.Ping(); err != nil {
 		log.Fatalf("cannot ping database: %v", err)
 	}

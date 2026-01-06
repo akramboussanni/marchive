@@ -15,6 +15,7 @@ type BookRouter struct {
 	DownloadRequestRepo *repo.DownloadRequestRepo
 	FavoriteRepo        *repo.FavoriteRepo
 	RequestCreditsRepo  *repo.RequestCreditsRepo
+	UserRepo            *repo.UserRepo
 }
 
 func NewBookRouter(repos *repo.Repos) http.Handler {
@@ -24,6 +25,7 @@ func NewBookRouter(repos *repo.Repos) http.Handler {
 		DownloadRequestRepo: repos.DownloadRequest,
 		FavoriteRepo:        repos.Favorite,
 		RequestCreditsRepo:  repos.RequestCredits,
+		UserRepo:            repos.User,
 	}
 	r := chi.NewRouter()
 
@@ -32,6 +34,7 @@ func NewBookRouter(repos *repo.Repos) http.Handler {
 	r.Group(func(r chi.Router) {
 		middleware.AddRatelimit(r, 100, 1*time.Minute)
 		r.Get("/explore", br.HandleExplore)
+		r.Get("/{hash}", br.HandleGetBookDetail)
 	})
 
 	r.Group(func(r chi.Router) {
@@ -58,6 +61,9 @@ func NewBookRouter(repos *repo.Repos) http.Handler {
 		middleware.AddRatelimit(r, 15, 1*time.Minute)
 		middleware.AddAuth(r, repos.User, repos.Token)
 		r.Post("/download", br.HandleRequestDownload)
+		r.Post("/ghost-mode", br.HandleUpdateGhostMode)
+		r.Post("/delete", br.HandleDeleteBook)
+		r.Post("/metadata", br.HandleUpdateBookMetadata)
 	})
 
 	return r

@@ -8,8 +8,33 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
+
+func sanitizeFilename(filename string) string {
+	// Remove or replace invalid filename characters for Windows
+	invalidChars := regexp.MustCompile(`[<>:"/\\|?*]`)
+	sanitized := invalidChars.ReplaceAllString(filename, "")
+
+	// Remove control characters
+	controlChars := regexp.MustCompile(`[\x00-\x1f\x7f]`)
+	sanitized = controlChars.ReplaceAllString(sanitized, "")
+
+	// Trim spaces and dots from the end
+	sanitized = strings.TrimRight(sanitized, ". ")
+
+	// Limit length to 200 characters to avoid path too long errors
+	if len(sanitized) > 200 {
+		sanitized = sanitized[:200]
+	}
+
+	if sanitized == "" {
+		return "untitled"
+	}
+
+	return sanitized
+}
 
 func extractMetaInformation(meta string) (language, format, size string) {
 	if meta == "" {
@@ -69,8 +94,7 @@ func (b *Book) Download(secretKey, folderPath string) error {
 		return errors.New("failed to download file")
 	}
 
-	filename := b.Title + "." + b.Format
-	filename = strings.ReplaceAll(filename, "/", "_")
+	filename := sanitizeFilename(b.Title) + "." + b.Format
 	filePath := filepath.Join(folderPath, filename)
 
 	out, err := os.Create(filePath)

@@ -14,6 +14,8 @@ type SavedBook struct {
 	FilePath      string `db:"file_path" json:"-"`
 	Status        string `db:"status" safe:"true" json:"status"`
 	DownloadCount int    `db:"download_count" safe:"true" json:"download_count"`
+	IsGhost       bool   `db:"is_ghost" safe:"true" json:"is_ghost"`
+	RequestedBy   *int64 `db:"requested_by" safe:"true" json:"requested_by,string,omitempty"`
 	CreatedAt     int64  `db:"created_at" safe:"true" json:"created_at,string"`
 	UpdatedAt     int64  `db:"updated_at" safe:"true" json:"updated_at,string"`
 }

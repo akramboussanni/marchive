@@ -3,11 +3,11 @@ package admin
 import (
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/akramboussanni/marchive/internal/api"
 	"github.com/akramboussanni/marchive/internal/applog"
-	"github.com/akramboussanni/marchive/internal/model"
+	"github.com/akramboussanni/marchive/internal/repo"
+	"github.com/akramboussanni/marchive/internal/services"
 	"github.com/akramboussanni/marchive/internal/utils"
 	"github.com/go-chi/chi/v5"
 )
@@ -104,21 +104,6 @@ func (ar *AdminRouter) HandleCreateUser(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if req.Role == "" {
-		req.Role = "user"
-	}
-
-	exists, err := ar.UserRepo.DuplicateName(r.Context(), req.Username)
-	if err != nil {
-		applog.Error("Failed to check username:", err)
-		api.WriteInternalError(w)
-		return
-	}
-	if exists {
-		api.WriteMessage(w, http.StatusConflict, "error", "username already exists")
-		return
-	}
-
 	passwordHash, err := utils.HashPassword(req.Password)
 	if err != nil {
 		applog.Error("Failed to hash password:", err)
@@ -126,17 +111,16 @@ func (ar *AdminRouter) HandleCreateUser(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	user := &model.User{
-		ID:           utils.GenerateSnowflakeID(),
+	user, err := ar.UserService.CreateUser(r.Context(), services.CreateUserParams{
 		Username:     req.Username,
 		PasswordHash: passwordHash,
 		Role:         req.Role,
-		CreatedAt:    time.Now().Unix(),
-		JwtSessionID: utils.GenerateSnowflakeID(),
-	}
-
-	err = ar.UserRepo.CreateUser(r.Context(), user)
+	})
 	if err != nil {
+		if err == repo.ErrUsernameTaken {
+			api.WriteMessage(w, http.StatusConflict, "error", "username already exists")
+			return
+		}
 		applog.Error("Failed to create user:", err)
 		api.WriteInternalError(w)
 		return

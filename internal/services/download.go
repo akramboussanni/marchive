@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/akramboussanni/marchive/internal/anna"
@@ -38,6 +40,9 @@ func (ds *DownloadService) ProcessPendingDownloads(ctx context.Context) {
 			log.Println("Download service shutting down...")
 			return
 		default:
+			// Clean up failed books older than 24 hours
+			ds.cleanupFailedBooks(ctx)
+
 			jobs, err := ds.repos.DownloadJob.GetPendingJobs(ctx, 5)
 			if err != nil {
 				log.Printf("Failed to get pending jobs: %v", err)
@@ -97,8 +102,9 @@ func (ds *DownloadService) processJob(ctx context.Context, job *model.DownloadJo
 			log.Printf("Book %s marked as ready but file missing, re-downloading", job.BookHash)
 			err = ds.processNewBook(ctx, job)
 			if err != nil {
-				log.Printf("Failed to re-download book: %v", err)
+				log.Printf("[RE-DOWNLOAD FAILED] Job %d, Book %s: %v", job.ID, job.BookHash, err)
 				ds.repos.DownloadJob.UpdateJobStatus(ctx, job.ID, model.DownloadStatusFailed, 0, err.Error())
+				ds.repos.Book.UpdateBookStatus(ctx, job.BookHash, model.BookStatusError, err.Error())
 				return
 			}
 			ds.repos.DownloadJob.UpdateJobStatus(ctx, job.ID, model.DownloadStatusCompleted, 100, "")
@@ -110,8 +116,9 @@ func (ds *DownloadService) processJob(ctx context.Context, job *model.DownloadJo
 	// Book exists but not ready, need to download it
 	err = ds.processNewBook(ctx, job)
 	if err != nil {
-		log.Printf("Failed to download existing book: %v", err)
+		log.Printf("[DOWNLOAD FAILED] Job %d, Existing Book %s: %v", job.ID, job.BookHash, err)
 		ds.repos.DownloadJob.UpdateJobStatus(ctx, job.ID, model.DownloadStatusFailed, 0, err.Error())
+		ds.repos.Book.UpdateBookStatus(ctx, job.BookHash, model.BookStatusError, err.Error())
 		return
 	}
 
@@ -139,18 +146,19 @@ func (ds *DownloadService) processNewBook(ctx context.Context, job *model.Downlo
 		}
 
 		book := &model.SavedBook{
-			Hash:      job.BookHash,
-			Title:     bookMetadata.Title,
-			Authors:   bookMetadata.Authors,
-			Publisher: bookMetadata.Publisher,
-			Language:  bookMetadata.Language,
-			Format:    bookMetadata.Format,
-			Size:      bookMetadata.Size,
-			CoverURL:  bookMetadata.CoverURL,
-			CoverData: bookMetadata.CoverData,
-			Status:    model.BookStatusProcessing,
-			CreatedAt: time.Now().Unix(),
-			UpdatedAt: time.Now().Unix(),
+			Hash:        job.BookHash,
+			Title:       bookMetadata.Title,
+			Authors:     bookMetadata.Authors,
+			Publisher:   bookMetadata.Publisher,
+			Language:    bookMetadata.Language,
+			Format:      bookMetadata.Format,
+			Size:        bookMetadata.Size,
+			CoverURL:    bookMetadata.CoverURL,
+			CoverData:   bookMetadata.CoverData,
+			Status:      model.BookStatusProcessing,
+			RequestedBy: &job.UserID,
+			CreatedAt:   time.Now().Unix(),
+			UpdatedAt:   time.Now().Unix(),
 		}
 
 		err = ds.repos.Book.CreateBook(ctx, book)
@@ -184,8 +192,9 @@ func (ds *DownloadService) processNewBook(ctx context.Context, job *model.Downlo
 
 	err = annaBook.Download(ds.secretKey, ds.downloadDir)
 	if err != nil {
+		log.Printf("[ANNA DOWNLOAD ERROR] Book %s: %v", job.BookHash, err)
 		ds.repos.Book.UpdateBookStatus(ctx, job.BookHash, model.BookStatusError, "")
-		return fmt.Errorf("failed to download book: %w", err)
+		return fmt.Errorf("failed to download book from Anna's Archive: %w", err)
 	}
 
 	ds.repos.DownloadJob.UpdateJobStatus(ctx, job.ID, model.DownloadStatusDownloading, 90, "")
@@ -194,6 +203,8 @@ func (ds *DownloadService) processNewBook(ctx context.Context, job *model.Downlo
 	if title == "" || title == "Unknown Title" {
 		title = job.BookHash[:8]
 	}
+	// Sanitize filename - remove invalid characters
+	title = sanitizeFilename(title)
 	filename := fmt.Sprintf("%s.%s", title, bookMetadata.Format)
 	filePath := filepath.Join(ds.downloadDir, filename)
 
@@ -210,7 +221,45 @@ func (ds *DownloadService) processNewBook(ctx context.Context, job *model.Downlo
 	return nil
 }
 
+func (ds *DownloadService) cleanupFailedBooks(ctx context.Context) {
+	cutoffTime := time.Now().Add(-24 * time.Hour).Unix()
+
+	result, err := ds.repos.Book.DeleteFailedBooks(ctx, cutoffTime)
+	if err != nil {
+		log.Printf("Failed to cleanup failed books: %v", err)
+		return
+	}
+
+	if result > 0 {
+		log.Printf("Cleaned up %d failed books", result)
+	}
+}
+
 func (ds *DownloadService) StartService(ctx context.Context) {
 	log.Println("Starting download service...")
 	ds.ProcessPendingDownloads(ctx)
+}
+
+func sanitizeFilename(filename string) string {
+	// Remove or replace invalid filename characters for Windows
+	invalidChars := regexp.MustCompile(`[<>:"/\\|?*]`)
+	sanitized := invalidChars.ReplaceAllString(filename, "")
+
+	// Remove control characters
+	controlChars := regexp.MustCompile(`[\x00-\x1f\x7f]`)
+	sanitized = controlChars.ReplaceAllString(sanitized, "")
+
+	// Trim spaces and dots from the end
+	sanitized = strings.TrimRight(sanitized, ". ")
+
+	// Limit length to 200 characters to avoid path too long errors
+	if len(sanitized) > 200 {
+		sanitized = sanitized[:200]
+	}
+
+	if sanitized == "" {
+		return "untitled"
+	}
+
+	return sanitized
 }

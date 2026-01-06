@@ -34,5 +34,4 @@ type InviteResponse struct {
 // @Description Invite list response
 type InviteListResponse struct {
 	Invites []Invite `json:"invites"`
-	Tokens  int      `json:"tokens" example:"1"`
 }

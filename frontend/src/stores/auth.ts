@@ -6,6 +6,8 @@ import type { User, LoginRequest, RegisterRequest } from '@/types/user'
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
   const loading = ref(false)
+  const initializing = ref(false)
+  const initialized = ref(false)
 
   const isAuthenticated = computed(() => user.value !== null)
   const isAdmin = computed(() => user.value?.role === 'admin')
@@ -52,6 +54,20 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function initialize() {
+    if (initialized.value) return
+    
+    initialized.value = true
+    initializing.value = true
+    try {
+      user.value = await authApi.getMe()
+    } catch (error) {
+      user.value = null
+    } finally {
+      initializing.value = false
+    }
+  }
+
   function clearAuth() {
     user.value = null
   }
@@ -59,12 +75,15 @@ export const useAuthStore = defineStore('auth', () => {
   return {
     user,
     loading,
+    initializing,
+    initialized,
     isAuthenticated,
     isAdmin,
     login,
     logout,
     register,
     fetchUser,
+    initialize,
     clearAuth
   }
 })

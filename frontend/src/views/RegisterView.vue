@@ -4,12 +4,13 @@
       <h1>Register</h1>
       <form @submit.prevent="handleRegister">
         <div class="form-group">
-          <label for="token">Invite Token</label>
+          <label for="token">Invite Code</label>
           <input
             id="token"
             v-model="token"
             type="text"
             required
+            placeholder="Enter your invite code"
           />
         </div>
         <div class="form-group">
@@ -59,7 +60,7 @@ onMounted(() => {
   if (route.query.token) {
     token.value = route.query.token as string
   } else {
-    error.value = 'No invite token provided. Registration requires an invite.'
+    error.value = 'No invite code provided. Registration requires an invite.'
   }
 })
 

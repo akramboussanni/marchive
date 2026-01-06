@@ -15,6 +15,11 @@ const router = createRouter({
           component: () => import('@/views/HomeView.vue')
         },
         {
+          path: 'book/:hash',
+          name: 'book-detail',
+          component: () => import('@/views/BookDetailView.vue')
+        },
+        {
           path: 'login',
           name: 'login',
           component: () => import('@/views/LoginView.vue'),
@@ -46,12 +51,9 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
 
-  if (!authStore.user && !authStore.loading && to.meta.requiresAuth) {
-    try {
-      await authStore.fetchUser()
-    } catch (error) {
-      authStore.clearAuth()
-    }
+  // Wait for auth initialization before checking routes
+  if (!authStore.initialized) {
+    await authStore.initialize()
   }
 
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {

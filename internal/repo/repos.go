@@ -30,8 +30,10 @@ type Columns struct {
 }
 
 func NewRepos(db *sqlx.DB) *Repos {
+	userRepo := NewUserRepo(db)
+
 	return &Repos{
-		User:            NewUserRepo(db),
+		User:            userRepo,
 		Token:           NewTokenRepo(db),
 		Lockout:         NewLockoutRepo(db),
 		DownloadRequest: NewDownloadRequestRepo(db),
@@ -40,7 +42,7 @@ func NewRepos(db *sqlx.DB) *Repos {
 		SearchCache:     NewSearchCacheRepo(db),
 		Favorite:        NewFavoriteRepo(db),
 		RequestCredits:  NewRequestCreditsRepo(db),
-		Invite:          NewInviteRepo(db),
+		Invite:          NewInviteRepo(db, userRepo),
 	}
 }
 

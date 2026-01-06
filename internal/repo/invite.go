@@ -15,28 +15,21 @@ import (
 
 type InviteRepo struct {
 	Columns
-	db *sqlx.DB
+	db       *sqlx.DB
+	userRepo *UserRepo
 }
 
-func NewInviteRepo(db *sqlx.DB) *InviteRepo {
-	repo := &InviteRepo{db: db}
+func NewInviteRepo(db *sqlx.DB, userRepo *UserRepo) *InviteRepo {
+	repo := &InviteRepo{
+		db:       db,
+		userRepo: userRepo,
+	}
 	repo.Columns = ExtractColumns[model.Invite]()
 	return repo
 }
 
 // CreateInvite creates a new invite for a user
 func (r *InviteRepo) CreateInvite(ctx context.Context, inviterID int64) (*model.Invite, error) {
-	// Check if user has invite tokens
-	var tokens int
-	err := r.db.GetContext(ctx, &tokens, "SELECT invite_tokens FROM users WHERE id = $1", inviterID)
-	if err != nil {
-		return nil, err
-	}
-
-	if tokens <= 0 {
-		return nil, ErrNoInviteTokens
-	}
-
 	// Generate unique token
 	token, err := r.generateUniqueToken(ctx)
 	if err != nil {
@@ -59,12 +52,6 @@ func (r *InviteRepo) CreateInvite(ctx context.Context, inviterID int64) (*model.
 		VALUES (%s)
 	`, r.AllRaw, r.AllPrefixed)
 	_, err = r.db.NamedExecContext(ctx, query, invite)
-	if err != nil {
-		return nil, err
-	}
-
-	// Deduct token from user
-	_, err = r.db.ExecContext(ctx, "UPDATE users SET invite_tokens = invite_tokens - 1 WHERE id = $1", inviterID)
 	if err != nil {
 		return nil, err
 	}
@@ -100,23 +87,35 @@ func (r *InviteRepo) UseInvite(ctx context.Context, token string, username strin
 		return err
 	}
 
-	// Check if username is already taken
-	var count int
-	err = tx.GetContext(ctx, &count, "SELECT COUNT(*) FROM users WHERE username = $1", username)
+	// Check if username already exists (using transaction connection)
+	var exists bool
+	err = tx.GetContext(ctx, &exists, "SELECT EXISTS(SELECT 1 FROM users WHERE username=$1)", username)
 	if err != nil {
 		return err
 	}
-	if count > 0 {
+	if exists {
 		return ErrUsernameTaken
 	}
 
-	// Create user
-	userID := utils.GenerateSnowflakeID()
+	// Create user (using transaction connection)
 	now := time.Now().Unix()
-	_, err = tx.ExecContext(ctx, `
-		INSERT INTO users (id, username, password_hash, created_at, user_role, invite_tokens) 
-		VALUES ($1, $2, $3, $4, 'user', 1)
-	`, userID, username, passwordHash, now)
+	user := &model.User{
+		ID:             utils.GenerateSnowflakeID(),
+		Username:       username,
+		PasswordHash:   passwordHash,
+		Role:           "user",
+		CreatedAt:      now,
+		JwtSessionID:   utils.GenerateSnowflakeID(),
+		InviteTokens:   0,
+		RequestCredits: 0,
+	}
+
+	userQuery := fmt.Sprintf(
+		"INSERT INTO users (%s) VALUES (%s)",
+		r.userRepo.AllRaw,
+		r.userRepo.AllPrefixed,
+	)
+	_, err = tx.NamedExecContext(ctx, userQuery, user)
 	if err != nil {
 		return err
 	}
@@ -124,7 +123,7 @@ func (r *InviteRepo) UseInvite(ctx context.Context, token string, username strin
 	// Mark invite as used
 	_, err = tx.ExecContext(ctx, `
 		UPDATE invites SET invitee_username = $1, invitee_id = $2, used_at = $3 WHERE token = $4
-	`, username, userID, now, token)
+	`, username, user.ID, now, token)
 	if err != nil {
 		return err
 	}
@@ -159,14 +158,6 @@ func (r *InviteRepo) RevokeInvite(ctx context.Context, token string, inviterID i
 		return err
 	}
 
-	// Return token to user
-	_, err = tx.ExecContext(ctx, `
-		UPDATE users SET invite_tokens = invite_tokens + 1 WHERE id = $1
-	`, inviterID)
-	if err != nil {
-		return err
-	}
-
 	// Commit transaction
 	return tx.Commit()
 }
@@ -177,13 +168,6 @@ func (r *InviteRepo) GetUserInvites(ctx context.Context, userID int64) ([]model.
 	query := fmt.Sprintf(`SELECT %s FROM invites WHERE inviter_id = $1 ORDER BY created_at DESC`, r.AllRaw)
 	err := r.db.SelectContext(ctx, &invites, query, userID)
 	return invites, err
-}
-
-// GetUserInviteTokens gets the number of invite tokens a user has
-func (r *InviteRepo) GetUserInviteTokens(ctx context.Context, userID int64) (int, error) {
-	var tokens int
-	err := r.db.GetContext(ctx, &tokens, "SELECT invite_tokens FROM users WHERE id = $1", userID)
-	return tokens, err
 }
 
 // generateUniqueToken generates a unique invite token
@@ -209,6 +193,5 @@ func (r *InviteRepo) generateUniqueToken(ctx context.Context) (string, error) {
 
 // Custom errors
 var (
-	ErrNoInviteTokens = errors.New("no invite tokens available")
-	ErrUsernameTaken  = errors.New("username already taken")
+	ErrUsernameTaken = errors.New("username already taken")
 )

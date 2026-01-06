@@ -4,7 +4,6 @@ export interface User {
   role: string
   created_at: string
   request_credits: number
-  invite_tokens: number
 }
 
 export interface LoginRequest {

@@ -41,6 +41,7 @@ type DownloadRequest struct {
 	Size      string `json:"size,omitempty" example:"5.2 MB"`
 	CoverURL  string `json:"cover_url,omitempty" example:"https://example.com/cover.jpg"`
 	CoverData string `json:"cover_data,omitempty"`
+	IsGhost   bool   `json:"is_ghost,omitempty"`
 }
 
 type DownloadResponse struct {
@@ -66,6 +67,8 @@ type BookWithStats struct {
 	CoverData     string `json:"cover_data"`
 	Status        string `json:"status"`
 	DownloadCount int    `json:"download_count"`
+	IsGhost       bool   `json:"is_ghost"`
+	RequestedBy   *int64 `json:"requested_by,string,omitempty"`
 	CreatedAt     int64  `json:"created_at,string"`
 }
 
@@ -95,4 +98,25 @@ type FavoritesResponse struct {
 type DownloadsResponse struct {
 	Jobs       []model.DownloadJobWithMetadata `json:"jobs"`
 	Pagination Pagination                      `json:"pagination"`
+}
+
+type UpdateGhostModeRequest struct {
+	BookHash string `json:"book_hash" binding:"required"`
+	IsGhost  bool   `json:"is_ghost"`
+}
+
+type DeleteBookRequest struct {
+	BookHash string `json:"book_hash" binding:"required"`
+}
+
+type UpdateBookMetadataRequest struct {
+	BookHash  string `json:"book_hash" binding:"required"`
+	Title     string `json:"title" binding:"required"`
+	Authors   string `json:"authors"`
+	Publisher string `json:"publisher"`
+}
+
+type BookDetailResponse struct {
+	Book        BookWithStats `json:"book"`
+	RequestedBy *model.User   `json:"requested_by,omitempty"`
 }

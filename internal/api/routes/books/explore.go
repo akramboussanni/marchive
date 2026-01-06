@@ -6,6 +6,8 @@ import (
 
 	"github.com/akramboussanni/marchive/internal/api"
 	"github.com/akramboussanni/marchive/internal/applog"
+	"github.com/akramboussanni/marchive/internal/model"
+	"github.com/akramboussanni/marchive/internal/utils"
 )
 
 func (br *BookRouter) HandleExplore(w http.ResponseWriter, r *http.Request) {
@@ -27,14 +29,39 @@ func (br *BookRouter) HandleExplore(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	books, err := br.BookRepo.GetBooksWithDownloadCount(r.Context(), limit, offset)
-	if err != nil {
-		applog.Error("Failed to get books:", err)
-		api.WriteInternalError(w)
-		return
+	// Get user from context if authenticated
+	user, hasUser := utils.UserFromContext(r.Context())
+	var userID int64
+	var isAdmin bool
+	if hasUser {
+		userID = user.ID
+		isAdmin = user.Role == "admin"
 	}
 
-	total, err := br.BookRepo.CountBooks(r.Context())
+	var books []model.SavedBook
+	var total int
+	var err error
+
+	if hasUser {
+		books, err = br.BookRepo.GetBooksForUser(r.Context(), userID, isAdmin, limit, offset)
+		if err != nil {
+			applog.Error("Failed to get books:", err)
+			api.WriteInternalError(w)
+			return
+		}
+
+		total, err = br.BookRepo.CountBooksForUser(r.Context(), userID, isAdmin)
+	} else {
+		books, err = br.BookRepo.GetBooks(r.Context(), limit, offset)
+		if err != nil {
+			applog.Error("Failed to get books:", err)
+			api.WriteInternalError(w)
+			return
+		}
+
+		total, err = br.BookRepo.CountBooks(r.Context())
+	}
+
 	if err != nil {
 		applog.Error("Failed to count books:", err)
 		api.WriteInternalError(w)
@@ -53,18 +80,20 @@ func (br *BookRouter) HandleExplore(w http.ResponseWriter, r *http.Request) {
 
 	for _, book := range books {
 		bookStats := BookWithStats{
-			Hash:          book["hash"].(string),
-			Title:         book["title"].(string),
-			Authors:       book["authors"].(string),
-			Publisher:     book["publisher"].(string),
-			Language:      book["language"].(string),
-			Format:        book["format"].(string),
-			Size:          book["size"].(string),
-			CoverURL:      book["cover_url"].(string),
-			CoverData:     book["cover_data"].(string),
-			Status:        book["status"].(string),
-			DownloadCount: book["download_count"].(int),
-			CreatedAt:     book["created_at"].(int64),
+			Hash:          book.Hash,
+			Title:         book.Title,
+			Authors:       book.Authors,
+			Publisher:     book.Publisher,
+			Language:      book.Language,
+			Format:        book.Format,
+			Size:          book.Size,
+			CoverURL:      book.CoverURL,
+			CoverData:     book.CoverData,
+			Status:        book.Status,
+			DownloadCount: book.DownloadCount,
+			IsGhost:       book.IsGhost,
+			RequestedBy:   book.RequestedBy,
+			CreatedAt:     book.CreatedAt,
 		}
 		response.Books = append(response.Books, bookStats)
 	}
