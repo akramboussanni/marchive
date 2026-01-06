@@ -22,8 +22,13 @@ func setupStaticRoutes(r chi.Router) {
 		return
 	}
 
-	r.Handle("/_app/*", http.StripPrefix("/_app/", http.FileServer(http.Dir(filepath.Join(frontendDir, "_app")))))
-	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir(filepath.Join(frontendDir, "static")))))
+	// Serve assets directory (Vite outputs JS/CSS here)
+	r.Handle("/assets/*", http.StripPrefix("/assets/", http.FileServer(http.Dir(filepath.Join(frontendDir, "assets")))))
+
+	// Serve favicon
+	r.Get("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join(frontendDir, "favicon.ico"))
+	})
 
 	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasPrefix(r.URL.Path, "/api/") {
@@ -31,7 +36,7 @@ func setupStaticRoutes(r chi.Router) {
 			return
 		}
 
-		if strings.HasPrefix(r.URL.Path, "/_app/") || strings.HasPrefix(r.URL.Path, "/static/") {
+		if strings.HasPrefix(r.URL.Path, "/assets/") {
 			http.NotFound(w, r)
 			return
 		}
