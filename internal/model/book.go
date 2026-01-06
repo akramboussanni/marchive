@@ -1,20 +1,21 @@
 package model
 
 type SavedBook struct {
-	ID        int64  `db:"id" safe:"true" json:"id,string"`
-	Hash      string `db:"hash" safe:"true" json:"hash"`
-	Title     string `db:"title" safe:"true" json:"title"`
-	Authors   string `db:"authors" safe:"true" json:"authors"`
-	Publisher string `db:"publisher" safe:"true" json:"publisher"`
-	Language  string `db:"language" safe:"true" json:"language"`
-	Format    string `db:"format" safe:"true" json:"format"`
-	Size      string `db:"size" safe:"true" json:"size"`
-	CoverURL  string `db:"cover_url" safe:"true" json:"cover_url"`
-	CoverData string `db:"cover_data" safe:"true" json:"cover_data"`
-	FilePath  string `db:"file_path" json:"-"`
-	Status    string `db:"status" safe:"true" json:"status"`
-	CreatedAt int64  `db:"created_at" safe:"true" json:"created_at,string"`
-	UpdatedAt int64  `db:"updated_at" safe:"true" json:"updated_at,string"`
+	ID            int64  `db:"id" safe:"true" json:"id,string"`
+	Hash          string `db:"hash" safe:"true" json:"hash"`
+	Title         string `db:"title" safe:"true" json:"title"`
+	Authors       string `db:"authors" safe:"true" json:"authors"`
+	Publisher     string `db:"publisher" safe:"true" json:"publisher"`
+	Language      string `db:"language" safe:"true" json:"language"`
+	Format        string `db:"format" safe:"true" json:"format"`
+	Size          string `db:"size" safe:"true" json:"size"`
+	CoverURL      string `db:"cover_url" safe:"true" json:"cover_url"`
+	CoverData     string `db:"cover_data" safe:"true" json:"cover_data"`
+	FilePath      string `db:"file_path" json:"-"`
+	Status        string `db:"status" safe:"true" json:"status"`
+	DownloadCount int    `db:"download_count" safe:"true" json:"download_count"`
+	CreatedAt     int64  `db:"created_at" safe:"true" json:"created_at,string"`
+	UpdatedAt     int64  `db:"updated_at" safe:"true" json:"updated_at,string"`
 }
 
 type DownloadJob struct {

@@ -44,6 +44,12 @@ func (r *BookRepo) GetBookByHash(ctx context.Context, hash string) (*model.Saved
 	return &book, err
 }
 
+func (r *BookRepo) IncrementDownloadCount(ctx context.Context, hash string) error {
+	query := `UPDATE savedbooks SET download_count = download_count + 1, updated_at = $1 WHERE hash = $2`
+	_, err := r.db.ExecContext(ctx, query, time.Now().Unix(), hash)
+	return err
+}
+
 func (r *BookRepo) UpdateBookStatus(ctx context.Context, hash, status, filePath string) error {
 	query := `UPDATE savedbooks SET status = $1, file_path = $2, updated_at = $3 WHERE hash = $4`
 	_, err := r.db.ExecContext(ctx, query, status, filePath, time.Now().Unix(), hash)
@@ -127,7 +133,7 @@ func (r *BookRepo) GetBooksWithDownloadCount(ctx context.Context, limit, offset 
 		err := rows.Scan(
 			&book.ID, &book.Hash, &book.Title, &book.Authors, &book.Publisher,
 			&book.Language, &book.Format, &book.Size, &book.CoverURL, &book.CoverData,
-			&book.FilePath, &book.Status, &book.CreatedAt, &book.UpdatedAt, &downloadCount,
+			&book.FilePath, &book.Status, &book.DownloadCount, &book.CreatedAt, &book.UpdatedAt,
 		)
 		if err != nil {
 			return nil, err

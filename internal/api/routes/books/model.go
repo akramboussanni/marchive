@@ -18,12 +18,10 @@ type BookWithStatus struct {
 }
 
 type SearchResponse struct {
-	SearchID   int64             `json:"search_id,string,omitempty"`
 	Books      []*BookWithStatus `json:"books"`
 	Total      int               `json:"total"`
 	Query      string            `json:"query"`
 	Pagination Pagination        `json:"pagination"`
-	ExpiresAt  int64             `json:"expires_at,omitempty"`
 }
 
 type Pagination struct {
@@ -34,13 +32,15 @@ type Pagination struct {
 }
 
 type DownloadRequest struct {
-	Hash  string `json:"hash" binding:"required" example:"abc123def456"`
-	Title string `json:"title" binding:"required" example:"Programming in Go"`
-}
-
-type CachedDownloadRequest struct {
-	SearchID int64 `json:"search_id,string" binding:"required" example:"123456789"`
-	Index    int   `json:"index" binding:"required" example:"0"`
+	Hash      string `json:"hash" binding:"required" example:"abc123def456"`
+	Title     string `json:"title" binding:"required" example:"Programming in Go"`
+	Authors   string `json:"authors,omitempty" example:"John Doe"`
+	Publisher string `json:"publisher,omitempty" example:"O'Reilly"`
+	Language  string `json:"language,omitempty" example:"English"`
+	Format    string `json:"format,omitempty" example:"PDF"`
+	Size      string `json:"size,omitempty" example:"5.2 MB"`
+	CoverURL  string `json:"cover_url,omitempty" example:"https://example.com/cover.jpg"`
+	CoverData string `json:"cover_data,omitempty"`
 }
 
 type DownloadResponse struct {

@@ -9,8 +9,16 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func NewInviteRoutes(inviteRepo *repo.InviteRepo, userRepo *repo.UserRepo, tokenRepo *repo.TokenRepo) http.Handler {
-	ir := NewInviteRouter(inviteRepo, userRepo)
+type InviteRouter struct {
+	InviteRepo *repo.InviteRepo
+	UserRepo   *repo.UserRepo
+}
+
+func NewInviteRouter(inviteRepo *repo.InviteRepo, userRepo *repo.UserRepo, tokenRepo *repo.TokenRepo) http.Handler {
+	ir := &InviteRouter{
+		InviteRepo: inviteRepo,
+		UserRepo:   userRepo,
+	}
 	r := chi.NewRouter()
 
 	r.Use(middleware.MaxBytesMiddleware(1 << 20))

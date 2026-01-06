@@ -13,7 +13,6 @@ type BookRouter struct {
 	BookRepo            *repo.BookRepo
 	DownloadJobRepo     *repo.DownloadJobRepo
 	DownloadRequestRepo *repo.DownloadRequestRepo
-	SearchCacheRepo     *repo.SearchCacheRepo
 	FavoriteRepo        *repo.FavoriteRepo
 	RequestCreditsRepo  *repo.RequestCreditsRepo
 }
@@ -23,7 +22,6 @@ func NewBookRouter(repos *repo.Repos) http.Handler {
 		BookRepo:            repos.Book,
 		DownloadJobRepo:     repos.DownloadJob,
 		DownloadRequestRepo: repos.DownloadRequest,
-		SearchCacheRepo:     repos.SearchCache,
 		FavoriteRepo:        repos.Favorite,
 		RequestCreditsRepo:  repos.RequestCredits,
 	}
@@ -60,7 +58,6 @@ func NewBookRouter(repos *repo.Repos) http.Handler {
 		middleware.AddRatelimit(r, 15, 1*time.Minute)
 		middleware.AddAuth(r, repos.User, repos.Token)
 		r.Post("/download", br.HandleRequestDownload)
-		r.Post("/download/cached", br.HandleCachedDownloadRequest)
 	})
 
 	return r

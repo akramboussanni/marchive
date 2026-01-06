@@ -1,38 +1,29 @@
-import { sveltekit } from '@sveltejs/kit/vite';
-import { defineConfig, loadEnv } from 'vite';
+import { fileURLToPath, URL } from 'node:url'
 
-export default defineConfig(({ mode }) => {
-	const env = loadEnv(mode, process.cwd(), '');
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import vueJsx from '@vitejs/plugin-vue-jsx'
 
-	return {
-		plugins: [sveltekit()],
-		server: {
-			port: 5173,
-			host: 'localhost',
-			proxy: {
-				'/api': {
-					target: env.BACKEND_URL || 'http://localhost:9520',
-					changeOrigin: true
-				}
-			},
-			// Enable hot reload in development
-			hmr: mode === 'development' ? {
-				overlay: true
-			} : undefined,
-			// Watch for file changes
-			watch: mode === 'development' ? {
-				usePolling: true,
-				interval: 100
-			} : undefined
-		},
-		define: {
-			'process.env.BACKEND_URL': JSON.stringify(env.BACKEND_URL || 'http://localhost:9520'),
-			'process.env.APP_NAME': JSON.stringify(env.APP_NAME || 'marchive'),
-			'process.env.NODE_ENV': JSON.stringify(mode)
-		},
-		// Optimize for development
-		optimizeDeps: {
-			include: mode === 'development' ? ['svelte'] : []
-		}
-	};
-});
+export default defineConfig({
+  plugins: [
+    vue(),
+    vueJsx(),
+  ],
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url))
+    },
+  },
+  build: {
+    outDir: '../static',
+    emptyOutDir: true
+  },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:9520',
+        changeOrigin: true
+      }
+    }
+  }
+})

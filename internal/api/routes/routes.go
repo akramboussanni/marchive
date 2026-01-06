@@ -28,7 +28,7 @@ func SetupRouter(repos *repo.Repos) http.Handler {
 	r.Mount("/api/auth", auth.NewAuthRouter(repos.User, repos.Token, repos.Lockout, repos.RequestCredits))
 	r.Mount("/api/books", books.NewBookRouter(repos))
 	r.Mount("/api/admin", admin.NewAdminRouter(repos))
-	r.Mount("/api/invites", invites.NewInviteRoutes(repos.Invite, repos.User, repos.Token))
+	r.Mount("/api/invites", invites.NewInviteRouter(repos.Invite, repos.User, repos.Token))
 
 	setupStaticRoutes(r)
 
