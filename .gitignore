@@ -42,7 +42,6 @@ frontend/.env.*.local
 # Build outputs
 frontend/build/
 frontend/dist/
-frontend/.svelte-kit/
 
 # Logs
 *.log

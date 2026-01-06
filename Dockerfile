@@ -54,8 +54,8 @@ WORKDIR /app
 # Copy Go binary from backend stage
 COPY --from=backend-builder /app/main ./
 
-# Copy built frontend from frontend stage (Vue outputs to ../static from frontend dir)
-COPY --from=frontend-builder /app/static ./static
+# Copy built frontend from frontend stage (Vue outputs to build from frontend dir)
+COPY --from=frontend-builder /app/frontend/build ./frontend/build
 
 # Create necessary directories and set proper permissions
 RUN mkdir -p downloads && \
