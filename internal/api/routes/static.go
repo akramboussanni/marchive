@@ -22,21 +22,19 @@ func setupStaticRoutes(r chi.Router) {
 		return
 	}
 
-	// Serve assets directory (Vite outputs JS/CSS here)
-	r.Handle("/assets/*", http.StripPrefix("/assets/", http.FileServer(http.Dir(filepath.Join(frontendDir, "assets")))))
-
+	// Serve static assets (JS, CSS, etc.)
+	assetsPath := filepath.Join(frontendDir, "assets")
+	r.Handle("/assets/*", http.StripPrefix("/assets/", http.FileServer(http.Dir(assetsPath))))
+	
 	// Serve favicon
 	r.Get("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, filepath.Join(frontendDir, "favicon.ico"))
 	})
 
-	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
+	// Catch-all: serve index.html for any route not matched above (SPA routing)
+	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
+		// Don't serve index.html for API routes
 		if strings.HasPrefix(r.URL.Path, "/api/") {
-			http.NotFound(w, r)
-			return
-		}
-
-		if strings.HasPrefix(r.URL.Path, "/assets/") {
 			http.NotFound(w, r)
 			return
 		}
