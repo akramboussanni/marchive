@@ -30,10 +30,14 @@ export function useMeta(options: MetaOptions) {
     }
 
     // OpenGraph tags for Discord, Twitter, etc.
+    updateMeta('og:site_name', 'mArchive')
     updateMeta('og:title', options.title || 'mArchive')
     updateMeta('og:description', options.description || 'Your personal digital library')
     updateMeta('og:url', currentUrl)
     updateMeta('og:type', 'website')
+    
+    // Theme color for Discord embeds (dark blue)
+    updateMeta('theme-color', '#1e3a8a', true)
     
     if (options.image) {
       const imageUrl = options.image.startsWith('http') ? options.image : `${baseUrl}${options.image}`

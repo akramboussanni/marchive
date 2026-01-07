@@ -38,7 +38,7 @@ func SetupRouter(repos *repo.Repos) http.Handler {
 	r.Mount("/api/admin", admin.NewAdminRouter(repos, userService))
 	r.Mount("/api/invites", invites.NewInviteRouter(repos.Invite, repos.User, repos.Token))
 
-	setupStaticRoutes(r)
+	setupStaticRoutes(r, repos)
 
 	return r
 }
