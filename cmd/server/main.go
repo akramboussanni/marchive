@@ -63,21 +63,21 @@ import (
 func createDefaultAdmin(repos *repo.Repos) {
 	adminUser, err := repos.User.GetUserByUsername(context.Background(), "admin")
 	if err == nil && adminUser != nil {
-		log.Println("Admin user already exists, skipping creation")
+		log.Println("admin user already exists, skipping creation")
 		return
 	}
 
 	passwordBytes := make([]byte, 16)
 	_, err = rand.Read(passwordBytes)
 	if err != nil {
-		log.Printf("Failed to generate random password: %v", err)
+		log.Printf("failed to generate random password: %v", err)
 		return
 	}
 	password := base64.URLEncoding.EncodeToString(passwordBytes)
 
 	passwordHash, err := utils.HashPassword(password)
 	if err != nil {
-		log.Printf("Failed to hash password: %v", err)
+		log.Printf("failed to hash password: %v", err)
 		return
 	}
 
@@ -95,10 +95,10 @@ func createDefaultAdmin(repos *repo.Repos) {
 		return
 	}
 
-	log.Printf("Default admin user created successfully!")
-	log.Printf("Username: admin")
-	log.Printf("Password: %s", password)
-	log.Printf("IMPORTANT: Change this password after first login!")
+	log.Printf("default admin user created successfully!")
+	log.Printf("username: admin")
+	log.Printf("password: %s", password)
+	log.Printf("IMPORTANT: change this password after first login!")
 }
 
 func main() {
