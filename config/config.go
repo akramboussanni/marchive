@@ -11,7 +11,7 @@ type AppConfig struct {
 	AppPort            int    `env:"APP_PORT" default:"9520"`
 	JwtSecret          string `env:"JWT_SECRET" panic:"true"`
 	DbConnectionString string `env:"DB_CONNECTION_STRING" default:"postgresql://postgres:postgres@localhost:5432/postgres?sslmode=disable"`
-	TrustIpHeaders     bool   `env:"TRUST_PROXY_IP_HEADERS" default:"false"`
+	TrustIpHeaders     bool   `env:"TRUST_PROXY_IP_HEADERS" default:"true"`
 
 	LockoutCount         int   `env:"LOCKOUT_COUNT" default:"5"`
 	LockoutDuration      int64 `env:"LOCKOUT_DURATION" default:"3600"`

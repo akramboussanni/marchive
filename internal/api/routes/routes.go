@@ -3,6 +3,7 @@ package routes
 import (
 	"net/http"
 
+	"github.com/akramboussanni/marchive/config"
 	"github.com/akramboussanni/marchive/internal/api"
 	"github.com/akramboussanni/marchive/internal/api/routes/admin"
 	"github.com/akramboussanni/marchive/internal/api/routes/auth"
@@ -19,6 +20,9 @@ import (
 func SetupRouter(repos *repo.Repos) http.Handler {
 	r := chi.NewRouter()
 
+	if config.App.TrustIpHeaders {
+		r.Use(chimiddleware.RealIP)
+	}
 	r.Use(middleware.SecurityHeaders)
 	r.Use(middleware.CORSHeaders)
 

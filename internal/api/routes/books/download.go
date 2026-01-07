@@ -198,10 +198,13 @@ func (br *BookRouter) HandleDownloadFile(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Increment download count
-	err = br.BookRepo.IncrementDownloadCount(r.Context(), hash)
-	if err != nil {
-		applog.Error("Failed to increment download count:", err)
+	// Increment download count (skip if fromreader=true to avoid skewing stats)
+	fromReader := r.URL.Query().Get("fromreader") == "true"
+	if !fromReader {
+		err = br.BookRepo.IncrementDownloadCount(r.Context(), hash)
+		if err != nil {
+			applog.Error("Failed to increment download count:", err)
+		}
 	}
 
 	filename := filepath.Base(book.FilePath)
