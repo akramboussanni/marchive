@@ -57,9 +57,13 @@ COPY --from=backend-builder /app/main ./
 # Copy built frontend from frontend stage (Vue outputs to build from frontend dir)
 COPY --from=frontend-builder /app/frontend/build ./frontend/build
 
+# Copy entrypoint script
+COPY docker-entrypoint.sh ./
+RUN chmod +x docker-entrypoint.sh
+
 # Create necessary directories and set proper permissions
 RUN mkdir -p downloads && \
-    chown -R appuser:appgroup downloads && \
+    chown -R appuser:appgroup downloads frontend/build && \
     chmod 755 downloads
 
 # Switch to non-root user
@@ -71,6 +75,9 @@ EXPOSE 9520
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:9520/ || exit 1
+
+# Use entrypoint to generate config at runtime
+ENTRYPOINT ["./docker-entrypoint.sh"]
 
 # Run the backend server
 CMD ["./main"]

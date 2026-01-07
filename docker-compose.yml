@@ -8,7 +8,7 @@ services:
       # CHANGE THESE FOR PRODUCTION:
       - JWT_SECRET=your-super-secret-jwt-key-here-change-in-production
       - ANNAS_API_KEY=your-annas-api-key-here
-      # Set your domain (for cookies and CORS)
+      # Set your domain (for cookies, CORS, and frontend API calls)
       - DOMAIN=example.com
       # These can stay as-is:
       - LOGGER_TYPE=std
