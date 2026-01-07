@@ -2,16 +2,8 @@ import axios from 'axios'
 import router from '@/router'
 import { useAuthStore } from '@/stores/auth'
 
-// Get API URL from runtime config or use relative path
-const getApiUrl = () => {
-  if (typeof window !== 'undefined' && (window as any).RUNTIME_CONFIG?.API_URL) {
-    return (window as any).RUNTIME_CONFIG.API_URL + '/api'
-  }
-  return '/api'
-}
-
 const apiClient = axios.create({
-  baseURL: getApiUrl(),
+  baseURL: '/api',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json'

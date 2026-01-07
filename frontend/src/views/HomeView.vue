@@ -266,7 +266,7 @@ const handleDownload = async (book: Book) => {
   try {
     downloadingBooks.value.add(book.hash)
     // Trigger actual file download
-    const downloadUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:9520'}/api/books/${book.hash}/download`
+    const downloadUrl = `${import.meta.env.VITE_API_URL || window.location.origin}/api/books/${book.hash}/download`
     const link = document.createElement('a')
     link.href = downloadUrl
     link.download = `${book.title}.${book.format}`

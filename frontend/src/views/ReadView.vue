@@ -204,7 +204,7 @@ async function loadBook() {
   }
 
   try {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:9520'
+    const apiUrl = import.meta.env.VITE_API_URL || window.location.origin
     const bookUrl = `${apiUrl}/api/books/${hash}/download`
     
     // Fetch book metadata first to get the title and format

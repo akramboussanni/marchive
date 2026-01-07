@@ -219,7 +219,7 @@ const handleImageError = () => {
 }
 
 const copyUrl = async () => {
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:9520'
+  const apiUrl = import.meta.env.VITE_API_URL || window.location.origin
   const url = `${apiUrl}/api/books/${props.book.hash}/download`
   try {
     await navigator.clipboard.writeText(url)
