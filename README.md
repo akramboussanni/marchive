@@ -18,7 +18,9 @@ Book library with over 100M+ books using Anna's Archive.
 ## 🐳 Docker Deployment
 
 ### Quick Start with Docker Compose
-Use the `docker-compose.yml` file.
+Use the `docker-compose.yml` file, set env vars and deploy. Should work instantly
+
+!!! Currently not working because of frontend rewrite, will be fixed soon !!!
 
 ### Environment Variables
 
@@ -39,26 +41,23 @@ Use the `docker-compose.yml` file.
 ### Prerequisites
 
 - Go 1.21+
-- Node.js 18+
-- pnpm
+- Node.js 22+
 - you don't need postgres, if your go is ran with `-tags=debug` it will run as sqlite db. (ex: `go run -tags=debug cmd/server/main.go`)
 
 ### Local Development Setup
 
-#### 1. Build the Frontend
+#### 1. Run the Frontend
 
 ```bash
 cd frontend
-pnpm install
-pnpm build
+npm install
+npm run dev
 ```
-
-This will create a `build/` directory with the compiled frontend assets.
 
 #### 2. Run the Backend
 
 ```bash
-# From the root directory
+# From the root directory, so maybe do cd ../
 go run -tags=debug cmd/server/main.go
 ```
 
@@ -66,55 +65,4 @@ The `-tags=debug` flag enables SQLite mode for local development, so you don't n
 
 #### 3. Access the Application
 
-Open your browser and go to `http://localhost:9520` - the backend will serve both the API and the frontend.
-
-#### Hot Reload Development
-
-For development with hot reload (frontend on localhost:5173, backend on localhost:9520):
-
-```bash
-python dev.py
-```
-
-This will:
-- Start the frontend dev server on http://localhost:5173 with hot reload
-- Start the backend server on http://localhost:9520
-- Automatically install dependencies
-- Provide real-time logs for both services
-
-## 📁 Project Structure
-
-```
-marchive/
-├── cmd/                     # Application entry points
-│   └── server/             # Main server binary
-├── internal/                # Private application code
-│   ├── anna/               # Book scraping service
-│   ├── api/                # HTTP handlers and routes
-│   ├── applog/             # Logging configuration
-│   ├── config/             # Configuration management
-│   ├── db/                 # Database layer
-│   ├── jwt/                # JWT authentication
-│   ├── middleware/         # HTTP middleware
-│   ├── model/              # Data models
-│   ├── repo/               # Repository layer
-│   ├── services/           # Business logic services
-│   └── utils/              # Utility functions
-├── frontend/                # Svelte frontend application
-│   ├── src/                # Source code
-│   │   ├── components/     # Reusable UI components
-│   │   ├── routes/         # Page components
-│   │   ├── stores/         # State management
-│   │   └── utils/          # Frontend utilities
-│   ├── build/              # Built frontend assets (generated)
-│   ├── package.json        # Frontend dependencies
-│   └── pnpm-lock.yaml      # Locked dependency versions
-├── config/                  # Configuration files
-├── downloads/               # Downloaded book storage
-├── Dockerfile              # Multi-stage Docker build
-├── docker-compose.yml      # Development environment
-├── docker-compose-https.yml # HTTPS development environment
-├── go.mod                  # Go module definition
-├── go.sum                  # Go dependency checksums
-└── README.md               # This file
-```
+Open your browser and go to `http://localhost:5173`.
