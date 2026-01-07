@@ -88,10 +88,16 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import apiClient from '@/api/client'
+import { useMeta } from '@/composables/useMeta'
 import StatsTab from '@/components/admin/StatsTab.vue'
 import UsersTab from '@/components/admin/UsersTab.vue'
 import InvitesTab from '@/components/admin/InvitesTab.vue'
 import UserModal from '@/components/admin/UserModal.vue'
+
+useMeta({
+  title: 'Admin Panel',
+  description: 'Manage mArchive users, invites, and statistics'
+})
 
 const activeTab = ref('stats')
 

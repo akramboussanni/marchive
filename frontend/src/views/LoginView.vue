@@ -36,6 +36,12 @@
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useMeta } from '@/composables/useMeta'
+
+useMeta({
+  title: 'Login',
+  description: 'Log in to your mArchive account to access your personal digital library'
+})
 
 const router = useRouter()
 const route = useRoute()

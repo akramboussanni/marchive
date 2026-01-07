@@ -113,12 +113,18 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useMeta } from '@/composables/useMeta'
 import { booksApi } from '@/api/books'
 import BookCard from '@/components/BookCard.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import EditMetadataDialog from '@/components/EditMetadataDialog.vue'
 import NotificationToast from '@/components/NotificationToast.vue'
 import type { Book, Pagination } from '@/types/book'
+
+useMeta({
+  title: 'Library',
+  description: 'Browse and discover books in your personal digital library'
+})
 
 const router = useRouter()
 const authStore = useAuthStore()

@@ -205,8 +205,14 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useMeta } from '@/composables/useMeta'
 import { booksApi } from '@/api/books'
 import type { Book } from '@/types/book'
+
+const { updateMeta } = useMeta({
+  title: 'Book Details',
+  description: 'View book details and download to your library'
+})
 
 const route = useRoute()
 const router = useRouter()
@@ -234,6 +240,16 @@ const loadBookDetail = async () => {
     const response = await booksApi.getBookDetail(hash)
     book.value = response.book
     requestedBy.value = response.requested_by || null
+
+    // Update meta tags with book info
+    if (book.value) {
+      const coverImage = book.value.cover_data || book.value.cover_url
+      updateMeta({
+        title: book.value.title,
+        description: `${book.value.title} by ${book.value.authors || 'Unknown Author'} - ${book.value.format} - ${book.value.size}`,
+        image: coverImage || undefined
+      })
+    }
 
     // Check if favorited
     if (authStore.isAuthenticated) {

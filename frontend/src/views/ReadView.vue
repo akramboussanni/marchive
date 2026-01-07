@@ -131,10 +131,16 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useMeta } from '@/composables/useMeta'
 import ePub from 'epubjs'
 import * as pdfjsLib from 'pdfjs-dist'
 import type { Book as EpubBook, Rendition } from 'epubjs'
 import type { PDFDocumentProxy, PDFPageProxy, RenderTask } from 'pdfjs-dist'
+
+useMeta({
+  title: 'Read Book',
+  description: 'Read your book in the browser'
+})
 
 // Set up PDF.js worker - proper way for Vite
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(

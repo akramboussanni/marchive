@@ -38,6 +38,12 @@
 
 <script setup lang="ts">
 import { useAuthStore } from '@/stores/auth'
+import { useMeta } from '@/composables/useMeta'
+
+useMeta({
+  title: 'Profile',
+  description: 'Manage your mArchive profile and settings'
+})
 
 const authStore = useAuthStore()
 

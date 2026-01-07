@@ -46,6 +46,12 @@
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useMeta } from '@/composables/useMeta'
+
+useMeta({
+  title: 'Register',
+  description: 'Create your mArchive account and start building your personal digital library'
+})
 
 const router = useRouter()
 const route = useRoute()
