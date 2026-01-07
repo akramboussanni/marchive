@@ -137,7 +137,7 @@ import * as pdfjsLib from 'pdfjs-dist'
 import type { Book as EpubBook, Rendition } from 'epubjs'
 import type { PDFDocumentProxy, PDFPageProxy, RenderTask } from 'pdfjs-dist'
 
-useMeta({
+const { updateMeta } = useMeta({
   title: 'Read Book',
   description: 'Read your book in the browser'
 })
@@ -221,6 +221,17 @@ async function loadBook() {
     const metadata = await metadataResponse.json()
     bookTitle.value = metadata.book?.title || 'Unknown Book'
     const bookFormat = (metadata.book?.format || '').toLowerCase()
+
+    // Update meta tags with book info
+    if (metadata.book) {
+      const coverImage = metadata.book.cover_data || metadata.book.cover_url
+      const authorInfo = metadata.book.authors ? ` by ${metadata.book.authors}` : ''
+      updateMeta({
+        title: `Read ${metadata.book.title} on mArchive`,
+        description: `${metadata.book.title}${authorInfo} - Read online on mArchive.`,
+        image: coverImage || undefined
+      })
+    }
 
     // Set format first so the DOM elements are created
     if (bookFormat === 'epub') {

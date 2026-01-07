@@ -244,9 +244,10 @@ const loadBookDetail = async () => {
     // Update meta tags with book info
     if (book.value) {
       const coverImage = book.value.cover_data || book.value.cover_url
+      const authorInfo = book.value.authors ? ` by ${book.value.authors}` : ''
       updateMeta({
-        title: book.value.title,
-        description: `${book.value.title} by ${book.value.authors || 'Unknown Author'} - ${book.value.format} - ${book.value.size}`,
+        title: `${book.value.title} by ${book.value.authors || 'Unknown Author'} | mArchive`,
+        description: `${book.value.title}${authorInfo} - ${book.value.format} - ${book.value.size}.`,
         image: coverImage || undefined
       })
     }
