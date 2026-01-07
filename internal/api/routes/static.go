@@ -22,28 +22,42 @@ func setupStaticRoutes(r chi.Router) {
 		return
 	}
 
-	// Serve assets directory (Vite outputs JS/CSS here) - MUST be before catch-all
-	assetsDir := filepath.Join(frontendDir, "assets")
+	// Create a file server for the frontend directory
+	fs := http.FileServer(http.Dir(frontendDir))
+
+	// Serve static files (assets, favicon, etc.)
 	r.Get("/assets/*", func(w http.ResponseWriter, req *http.Request) {
-		// Strip /assets/ prefix and serve from assets directory
-		path := strings.TrimPrefix(req.URL.Path, "/assets/")
-		fullPath := filepath.Join(assetsDir, path)
-		http.ServeFile(w, req, fullPath)
+		fs.ServeHTTP(w, req)
+	})
+
+	// Serve favicon and other root-level static files
+	r.Get("/favicon.ico", func(w http.ResponseWriter, req *http.Request) {
+		fs.ServeHTTP(w, req)
 	})
 
 	// Catch-all: serve index.html for SPA routing
-	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasPrefix(r.URL.Path, "/api/") {
-			http.NotFound(w, r)
+	r.Get("/*", func(w http.ResponseWriter, req *http.Request) {
+		// Skip API routes
+		if strings.HasPrefix(req.URL.Path, "/api/") {
+			http.NotFound(w, req)
 			return
 		}
 
+		// Check if the requested file exists
+		requestedPath := filepath.Join(frontendDir, req.URL.Path)
+		if info, err := os.Stat(requestedPath); err == nil && !info.IsDir() {
+			// File exists, serve it directly
+			fs.ServeHTTP(w, req)
+			return
+		}
+
+		// Otherwise serve index.html for SPA routing
 		indexPath := filepath.Join(frontendDir, "index.html")
 		if _, err := os.Stat(indexPath); os.IsNotExist(err) {
-			http.NotFound(w, r)
+			http.NotFound(w, req)
 			return
 		}
 
-		http.ServeFile(w, r, indexPath)
+		http.ServeFile(w, req, indexPath)
 	})
 }
