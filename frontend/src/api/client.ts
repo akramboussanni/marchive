@@ -30,6 +30,14 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config
 
     if (error.response?.status === 401 && !originalRequest._retry) {
+      // Don't retry if this was the refresh endpoint itself
+      if (originalRequest.url?.includes('/auth/refresh')) {
+        const authStore = useAuthStore()
+        authStore.clearAuth()
+        router.push('/login')
+        return Promise.reject(error)
+      }
+
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject })
@@ -46,6 +54,15 @@ apiClient.interceptors.response.use(
       try {
         await apiClient.post('/auth/refresh', {})
         
+        // Refresh succeeded - update auth store
+        const authStore = useAuthStore()
+        try {
+          await authStore.fetchUser()
+        } catch (e) {
+          // If fetching user fails after refresh, something is wrong
+          console.error('Failed to fetch user after refresh:', e)
+        }
+        
         processQueue()
         isRefreshing = false
         
@@ -56,6 +73,7 @@ apiClient.interceptors.response.use(
         
         const authStore = useAuthStore()
         authStore.clearAuth()
+        router.push('/login')
         
         return Promise.reject(refreshError)
       }
