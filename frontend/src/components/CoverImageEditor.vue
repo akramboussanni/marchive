@@ -164,19 +164,19 @@ const applyFilters = () => {
   
   for (let i = 0; i < data.length; i += 4) {
     // Apply brightness
-    data[i] += brightnessValue
-    data[i + 1] += brightnessValue
-    data[i + 2] += brightnessValue
+    let r = data[i]! + brightnessValue
+    let g = data[i + 1]! + brightnessValue
+    let b = data[i + 2]! + brightnessValue
     
     // Apply contrast
-    data[i] = factor * (data[i] - 128) + 128
-    data[i + 1] = factor * (data[i + 1] - 128) + 128
-    data[i + 2] = factor * (data[i + 2] - 128) + 128
+    r = factor * (r - 128) + 128
+    g = factor * (g - 128) + 128
+    b = factor * (b - 128) + 128
     
-    // Clamp values
-    data[i] = Math.max(0, Math.min(255, data[i]))
-    data[i + 1] = Math.max(0, Math.min(255, data[i + 1]))
-    data[i + 2] = Math.max(0, Math.min(255, data[i + 2]))
+    // Clamp values and assign back
+    data[i] = Math.max(0, Math.min(255, r))
+    data[i + 1] = Math.max(0, Math.min(255, g))
+    data[i + 2] = Math.max(0, Math.min(255, b))
   }
   
   ctx.value.putImageData(imageData, 0, 0)
@@ -197,7 +197,7 @@ const updateAspectRatio = () => {
       '3:4': 3 / 4
     }
     
-    const ratio = ratios[aspectRatio.value]
+    const ratio = ratios[aspectRatio.value] ?? 0
     if (ratio > 0) {
       cropWidth.value = canvas.value.width
       cropHeight.value = cropWidth.value / ratio
@@ -209,6 +209,7 @@ const updateAspectRatio = () => {
     }
   }
 }
+
 
 const reset = () => {
   rotation.value = 0
