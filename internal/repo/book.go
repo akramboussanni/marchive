@@ -295,3 +295,68 @@ func (r *BookRepo) UpdateBookMetadata(ctx context.Context, hash string, title, a
 	_, err := r.db.ExecContext(ctx, query, title, authors, publisher, time.Now().Unix(), hash)
 	return err
 }
+
+// CreateUploadedBook creates a new uploaded book record
+func (r *BookRepo) CreateUploadedBook(ctx context.Context, book *model.SavedBook) error {
+	book.ID = utils.GenerateSnowflakeID()
+	book.CreatedAt = time.Now().Unix()
+	book.UpdatedAt = time.Now().Unix()
+	book.IsUploaded = true
+	book.Status = model.BookStatusReady
+
+	query := fmt.Sprintf(
+		"INSERT INTO savedbooks (%s) VALUES (%s)",
+		r.AllRaw,
+		r.AllPrefixed,
+	)
+	_, err := r.db.NamedExecContext(ctx, query, book)
+	return err
+}
+
+// UpdateBookCover updates the cover image for a book
+func (r *BookRepo) UpdateBookCover(ctx context.Context, hash, coverURL, coverData string) error {
+	query := `UPDATE savedbooks SET cover_url = $1, cover_data = $2, updated_at = $3 WHERE hash = $4`
+	_, err := r.db.ExecContext(ctx, query, coverURL, coverData, time.Now().Unix(), hash)
+	return err
+}
+
+// GetUploadedBooksByUser returns all books uploaded by a specific user
+func (r *BookRepo) GetUploadedBooksByUser(ctx context.Context, userID int64, limit, offset int) ([]model.SavedBook, error) {
+	var books []model.SavedBook
+	query := fmt.Sprintf(`
+		SELECT %s FROM savedbooks 
+		WHERE is_uploaded = true AND uploaded_by = $1
+		ORDER BY created_at DESC 
+		LIMIT $2 OFFSET $3
+	`, r.AllRaw)
+	err := r.db.SelectContext(ctx, &books, query, userID, limit, offset)
+	return books, err
+}
+
+// CountUploadedBooksByUser counts total uploads for a user
+func (r *BookRepo) CountUploadedBooksByUser(ctx context.Context, userID int64) (int, error) {
+	var count int
+	err := r.db.GetContext(ctx, &count, "SELECT COUNT(*) FROM savedbooks WHERE is_uploaded = true AND uploaded_by = $1", userID)
+	return count, err
+}
+
+// DeleteUploadedBook deletes an uploaded book (only if user owns it)
+func (r *BookRepo) DeleteUploadedBook(ctx context.Context, hash string, userID int64) error {
+	query := `DELETE FROM savedbooks WHERE hash = $1 AND is_uploaded = true AND uploaded_by = $2`
+	result, err := r.db.ExecContext(ctx, query, hash, userID)
+	if err != nil {
+		return err
+	}
+	
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	
+	if rows == 0 {
+		return fmt.Errorf("book not found or user does not have permission to delete")
+	}
+	
+	return nil
+}
+

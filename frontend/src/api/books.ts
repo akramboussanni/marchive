@@ -59,5 +59,26 @@ export const booksApi = {
       publisher 
     })
     return response.data
+  },
+
+  // Upload book
+  async uploadBook(formData: FormData) {
+    const response = await apiClient.post('/books/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+    return response.data
+  },
+
+  // Update book cover
+  async updateBookCover(bookHash: string, formData: FormData) {
+    const response = await apiClient.put(`/books/${bookHash}/cover`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+    return response.data
   }
 }
+

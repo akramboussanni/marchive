@@ -1,24 +1,28 @@
 package model
 
 type SavedBook struct {
-	ID            int64  `db:"id" safe:"true" json:"id,string"`
-	Hash          string `db:"hash" safe:"true" json:"hash"`
-	Title         string `db:"title" safe:"true" json:"title"`
-	Authors       string `db:"authors" safe:"true" json:"authors"`
-	Publisher     string `db:"publisher" safe:"true" json:"publisher"`
-	Language      string `db:"language" safe:"true" json:"language"`
-	Format        string `db:"format" safe:"true" json:"format"`
-	Size          string `db:"size" safe:"true" json:"size"`
-	CoverURL      string `db:"cover_url" safe:"true" json:"cover_url"`
-	CoverData     string `db:"cover_data" safe:"true" json:"cover_data"`
-	FilePath      string `db:"file_path" json:"-"`
-	Status        string `db:"status" safe:"true" json:"status"`
-	DownloadCount int    `db:"download_count" safe:"true" json:"download_count"`
-	IsGhost       bool   `db:"is_ghost" safe:"true" json:"is_ghost"`
-	RequestedBy   *int64 `db:"requested_by" safe:"true" json:"requested_by,string,omitempty"`
-	CreatedAt     int64  `db:"created_at" safe:"true" json:"created_at,string"`
-	UpdatedAt     int64  `db:"updated_at" safe:"true" json:"updated_at,string"`
+	ID               int64  `db:"id" safe:"true" json:"id,string"`
+	Hash             string `db:"hash" safe:"true" json:"hash"`
+	Title            string `db:"title" safe:"true" json:"title"`
+	Authors          string `db:"authors" safe:"true" json:"authors"`
+	Publisher        string `db:"publisher" safe:"true" json:"publisher"`
+	Language         string `db:"language" safe:"true" json:"language"`
+	Format           string `db:"format" safe:"true" json:"format"`
+	Size             string `db:"size" safe:"true" json:"size"`
+	CoverURL         string `db:"cover_url" safe:"true" json:"cover_url"`
+	CoverData        string `db:"cover_data" safe:"true" json:"cover_data"`
+	FilePath         string `db:"file_path" json:"-"`
+	Status           string `db:"status" safe:"true" json:"status"`
+	DownloadCount    int    `db:"download_count" safe:"true" json:"download_count"`
+	IsGhost          bool   `db:"is_ghost" safe:"true" json:"is_ghost"`
+	RequestedBy      *int64 `db:"requested_by" safe:"true" json:"requested_by,string,omitempty"`
+	IsUploaded       bool   `db:"is_uploaded" safe:"true" json:"is_uploaded"`
+	UploadedBy       *int64 `db:"uploaded_by" safe:"true" json:"uploaded_by,string,omitempty"`
+	OriginalFilename string `db:"original_filename" safe:"true" json:"original_filename,omitempty"`
+	CreatedAt        int64  `db:"created_at" safe:"true" json:"created_at,string"`
+	UpdatedAt        int64  `db:"updated_at" safe:"true" json:"updated_at,string"`
 }
+
 
 type DownloadJob struct {
 	ID        int64  `db:"id" safe:"true" json:"id,string"`

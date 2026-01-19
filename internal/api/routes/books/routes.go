@@ -65,7 +65,10 @@ func NewBookRouter(repos *repo.Repos) http.Handler {
 		r.Post("/ghost-mode", br.HandleUpdateGhostMode)
 		r.Post("/delete", br.HandleDeleteBook)
 		r.Post("/metadata", br.HandleUpdateBookMetadata)
+		r.Post("/upload", br.HandleUploadBook)
+		r.Put("/{hash}/cover", br.HandleUpdateCover)
 	})
 
 	return r
 }
+

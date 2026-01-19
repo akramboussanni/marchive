@@ -59,21 +59,25 @@ type BookListResponse struct {
 }
 
 type BookWithStats struct {
-	Hash          string `json:"hash"`
-	Title         string `json:"title"`
-	Authors       string `json:"authors"`
-	Publisher     string `json:"publisher"`
-	Language      string `json:"language"`
-	Format        string `json:"format"`
-	Size          string `json:"size"`
-	CoverURL      string `json:"cover_url"`
-	CoverData     string `json:"cover_data"`
-	Status        string `json:"status"`
-	DownloadCount int    `json:"download_count"`
-	IsGhost       bool   `json:"is_ghost"`
-	RequestedBy   *int64 `json:"requested_by,string,omitempty"`
-	CreatedAt     int64  `json:"created_at,string"`
+	Hash             string `json:"hash"`
+	Title            string `json:"title"`
+	Authors          string `json:"authors"`
+	Publisher        string `json:"publisher"`
+	Language         string `json:"language"`
+	Format           string `json:"format"`
+	Size             string `json:"size"`
+	CoverURL         string `json:"cover_url"`
+	CoverData        string `json:"cover_data"`
+	Status           string `json:"status"`
+	DownloadCount    int    `json:"download_count"`
+	IsGhost          bool   `json:"is_ghost"`
+	RequestedBy      *int64 `json:"requested_by,string,omitempty"`
+	IsUploaded       bool   `json:"is_uploaded"`
+	UploadedBy       *int64 `json:"uploaded_by,string,omitempty"`
+	OriginalFilename string `json:"original_filename,omitempty"`
+	CreatedAt        int64  `json:"created_at,string"`
 }
+
 
 type JobStatusResponse struct {
 	JobID     int64  `json:"job_id,string"`
