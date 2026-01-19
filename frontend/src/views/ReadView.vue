@@ -210,15 +210,18 @@ async function loadBook() {
   }
 
   try {
-    const apiUrl = import.meta.env.VITE_API_URL || window.location.origin
-    const bookUrl = `${apiUrl}/api/books/${hash}/download?fromreader=true`
+    // Use relative URLs so they go through Vite proxy in dev mode
+    const bookUrl = `/api/books/${hash}/download?fromreader=true`
     
     // Fetch book metadata first to get the title and format
-    const metadataResponse = await fetch(`${apiUrl}/api/books/${hash}`)
+    const metadataResponse = await fetch(`/api/books/${hash}`, {
+      credentials: 'include'
+    })
     if (!metadataResponse.ok) {
       throw new Error('Failed to load book metadata')
     }
     const metadata = await metadataResponse.json()
+
     bookTitle.value = metadata.book?.title || 'Unknown Book'
     const bookFormat = (metadata.book?.format || '').toLowerCase()
 

@@ -311,26 +311,37 @@ const formatFileSize = (bytes: number): string => {
 
 <style scoped>
 .upload-container {
-  max-width: 800px;
-  margin: 2rem auto;
-  padding: 0 1rem;
+  min-height: calc(100vh - 73px);
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
 }
 
 .upload-card {
-  background: white;
-  border-radius: 12px;
-  padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 16px;
+  padding: 2.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(12px);
+  animation: fadeInUp 0.6s ease;
 }
 
 h1 {
   margin: 0 0 0.5rem 0;
-  color: #2c3e50;
+  font-size: 2rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.02em;
 }
 
 .subtitle {
-  color: #7f8c8d;
+  color: #64748b;
   margin: 0 0 2rem 0;
+  font-size: 1.125rem;
 }
 
 .upload-form {
@@ -347,25 +358,56 @@ h1 {
 
 label {
   font-weight: 600;
-  color: #2c3e50;
+  color: #e2e8f0;
+  font-size: 0.95rem;
 }
 
 label.required::after {
   content: ' *';
-  color: #e74c3c;
+  color: #f87171;
 }
 
 input[type="text"],
 input[type="file"] {
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 6px;
+  padding: 0.875rem;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 8px;
   font-size: 1rem;
+  color: #e2e8f0;
+  transition: all 0.2s ease;
 }
 
-input[type="text"]:focus {
+input[type="text"]:focus,
+input[type="file"]:focus {
   outline: none;
-  border-color: #3498db;
+  border-color: #3b82f6;
+  background: rgba(15, 23, 42, 0.8);
+}
+
+input[type="text"]::placeholder {
+  color: #64748b;
+}
+
+input[type="file"] {
+  cursor: pointer;
+}
+
+input[type="file"]::file-selector-button {
+  padding: 0.5rem 1rem;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 6px;
+  color: #3b82f6;
+  font-weight: 500;
+  cursor: pointer;
+  margin-right: 1rem;
+  transition: all 0.2s ease;
+}
+
+input[type="file"]::file-selector-button:hover {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: #3b82f6;
 }
 
 .file-input-wrapper {
@@ -377,23 +419,24 @@ input[type="text"]:focus {
   justify-content: space-between;
   align-items: center;
   margin-top: 0.5rem;
-  padding: 0.5rem;
-  background: #f8f9fa;
-  border-radius: 4px;
+  padding: 0.75rem;
+  background: rgba(59, 130, 246, 0.05);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 8px;
 }
 
 .file-name {
   font-weight: 500;
-  color: #2c3e50;
+  color: #e2e8f0;
 }
 
 .file-size {
-  color: #7f8c8d;
+  color: #94a3b8;
   font-size: 0.9rem;
 }
 
 small {
-  color: #7f8c8d;
+  color: #64748b;
   font-size: 0.85rem;
 }
 
@@ -403,41 +446,47 @@ small {
   flex-direction: column;
   align-items: center;
   gap: 1rem;
+  padding: 1.5rem;
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 12px;
 }
 
 .cover-preview img {
   max-width: 200px;
   max-height: 300px;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
 .error-message {
   padding: 1rem;
-  background: #fee;
-  border: 1px solid #fcc;
-  border-radius: 6px;
-  color: #c33;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  color: #fca5a5;
 }
 
 .success-message {
   padding: 1rem;
-  background: #efe;
-  border: 1px solid #cfc;
-  border-radius: 6px;
-  color: #3c3;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 8px;
+  color: #86efac;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
 .view-book-link {
-  color: #3498db;
+  color: #3b82f6;
   text-decoration: none;
   font-weight: 600;
+  transition: color 0.2s ease;
 }
 
 .view-book-link:hover {
+  color: #60a5fa;
   text-decoration: underline;
 }
 
@@ -448,21 +497,24 @@ small {
 .progress-bar {
   width: 100%;
   height: 8px;
-  background: #ecf0f1;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(59, 130, 246, 0.2);
   border-radius: 4px;
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: #3498db;
+  background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
   transition: width 0.3s ease;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
 }
 
 .upload-progress p {
   margin-top: 0.5rem;
   text-align: center;
-  color: #7f8c8d;
+  color: #94a3b8;
+  font-size: 0.9rem;
 }
 
 .form-actions {
@@ -473,41 +525,99 @@ small {
 
 .btn-primary,
 .btn-secondary {
-  padding: 0.75rem 1.5rem;
+  padding: 0.875rem 1.5rem;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .btn-primary {
-  background: #3498db;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
   flex: 1;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #2980b9;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
 }
 
 .btn-primary:disabled {
-  background: #bdc3c7;
+  background: rgba(59, 130, 246, 0.3);
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .btn-secondary {
-  background: #ecf0f1;
-  color: #2c3e50;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: #3b82f6;
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: #d5dbdb;
+  background: rgba(59, 130, 246, 0.2);
+  border-color: #3b82f6;
 }
 
 .btn-secondary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .upload-container {
+    padding: 1.5rem 1rem;
+  }
+
+  .upload-card {
+    padding: 1.5rem;
+  }
+
+  h1 {
+    font-size: 1.75rem;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .upload-container {
+    padding: 1rem 0.75rem;
+  }
+
+  .upload-card {
+    padding: 1.25rem;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+  }
 }
 </style>

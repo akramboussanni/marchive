@@ -35,8 +35,14 @@ func SaveUploadedFile(file multipart.File, header *multipart.FileHeader, destDir
 	uniqueName := GenerateUniqueFilename(ext)
 	destPath := filepath.Join(destDir, uniqueName)
 
+	// Convert to absolute path for consistency
+	absPath, err := filepath.Abs(destPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to get absolute path: %w", err)
+	}
+
 	// Create destination file
-	dst, err := os.Create(destPath)
+	dst, err := os.Create(absPath)
 	if err != nil {
 		return "", fmt.Errorf("failed to create file: %w", err)
 	}
@@ -44,12 +50,13 @@ func SaveUploadedFile(file multipart.File, header *multipart.FileHeader, destDir
 
 	// Copy file contents
 	if _, err := io.Copy(dst, file); err != nil {
-		os.Remove(destPath) // Clean up on error
+		os.Remove(absPath) // Clean up on error
 		return "", fmt.Errorf("failed to save file: %w", err)
 	}
 
-	return destPath, nil
+	return absPath, nil
 }
+
 
 // ValidateBookFile checks if the book file is valid
 func ValidateBookFile(header *multipart.FileHeader) error {
@@ -188,3 +195,37 @@ func GetFileExtension(filename string) string {
 	return ext
 }
 
+// GetFileExtensionWithDot returns the file extension from a filename including the dot
+func GetFileExtensionWithDot(filename string) string {
+	return strings.ToLower(filepath.Ext(filename))
+}
+
+// GetAbsolutePath returns the absolute path for a file in a directory
+func GetAbsolutePath(dir, filename string) (string, error) {
+	return filepath.Abs(filepath.Join(dir, filename))
+}
+
+// GuessBookTitle extracts a readable title from a filename
+func GuessBookTitle(filename string) string {
+	// Remove extension
+	ext := filepath.Ext(filename)
+	title := strings.TrimSuffix(filename, ext)
+
+	// Replace common separators with spaces
+	title = strings.ReplaceAll(title, "_", " ")
+	title = strings.ReplaceAll(title, "-", " ")
+	title = strings.ReplaceAll(title, ".", " ")
+
+	// Clean up multiple spaces
+	for strings.Contains(title, "  ") {
+		title = strings.ReplaceAll(title, "  ", " ")
+	}
+
+	title = strings.TrimSpace(title)
+
+	if title == "" {
+		return "Untitled"
+	}
+
+	return title
+}

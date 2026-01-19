@@ -34,7 +34,8 @@ apiClient.interceptors.response.use(
       if (originalRequest.url?.includes('/auth/refresh')) {
         const authStore = useAuthStore()
         authStore.clearAuth()
-        router.push('/login')
+        // Don't redirect to login - just let the request fail silently
+        // The router guard will handle redirects for protected routes
         return Promise.reject(error)
       }
 
@@ -53,7 +54,7 @@ apiClient.interceptors.response.use(
 
       try {
         await apiClient.post('/auth/refresh', {})
-        
+
         // Refresh succeeded - update auth store
         const authStore = useAuthStore()
         try {
@@ -62,19 +63,27 @@ apiClient.interceptors.response.use(
           // If fetching user fails after refresh, something is wrong
           console.error('Failed to fetch user after refresh:', e)
         }
-        
+
         processQueue()
         isRefreshing = false
-        
+
         return apiClient(originalRequest)
       } catch (refreshError) {
         processQueue(refreshError)
         isRefreshing = false
-        
+
         const authStore = useAuthStore()
         authStore.clearAuth()
-        router.push('/login')
-        
+
+        // Only redirect to login if we're trying to access a protected route
+        // Check if the original request was for a protected endpoint
+        const protectedEndpoints = ['/auth/me', '/books/favorites', '/books/downloads', '/books/upload', '/books/favorite', '/books/download', '/books/ghost-mode', '/books/delete', '/books/metadata']
+        const isProtectedRequest = protectedEndpoints.some(endpoint => originalRequest.url?.includes(endpoint))
+
+        if (isProtectedRequest && router.currentRoute.value.meta.requiresAuth) {
+          router.push('/login')
+        }
+
         return Promise.reject(refreshError)
       }
     }

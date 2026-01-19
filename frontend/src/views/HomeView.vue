@@ -101,6 +101,8 @@
       :title="editDialog.title"
       :authors="editDialog.authors"
       :publisher="editDialog.publisher"
+      :book-hash="editDialog.bookHash"
+      :current-cover="editDialog.currentCover"
       @save="saveMetadata"
       @cancel="cancelEdit"
     />
@@ -149,7 +151,8 @@ const editDialog = ref({
   title: '',
   authors: '',
   publisher: '',
-  bookHash: ''
+  bookHash: '',
+  currentCover: ''
 })
 
 const booksPagination = ref<Pagination>({
@@ -306,16 +309,25 @@ const handleEditBook = (book: Book) => {
     title: book.title,
     authors: book.authors,
     publisher: book.publisher,
-    bookHash: book.hash
+    bookHash: book.hash,
+    currentCover: book.cover_data || book.cover_url || ''
   }
 }
 
-const saveMetadata = async (data: { title: string; authors: string; publisher: string }) => {
+const saveMetadata = async (data: { title: string; authors: string; publisher: string; coverFile?: File }) => {
   const bookHash = editDialog.value.bookHash
   editDialog.value.isOpen = false
 
   try {
+    // Update text metadata
     await booksApi.updateBookMetadata(bookHash, data.title, data.authors, data.publisher)
+    
+    // Update cover if a new one was uploaded
+    if (data.coverFile) {
+      const formData = new FormData()
+      formData.append('cover', data.coverFile)
+      await booksApi.updateBookCover(bookHash, formData)
+    }
     
     // Update local book data
     const bookIndex = books.value.findIndex(b => b.hash === bookHash)

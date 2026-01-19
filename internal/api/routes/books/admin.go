@@ -375,3 +375,121 @@ func (br *BookRouter) HandleUpdateCover(w http.ResponseWriter, r *http.Request) 
 	api.WriteMessage(w, http.StatusOK, "success", "Cover updated successfully")
 }
 
+// HandleRestoreBooks scans the downloads directory and adds any books not in the database
+func (br *BookRouter) HandleRestoreBooks(w http.ResponseWriter, r *http.Request) {
+	user, ok := utils.UserFromContext(r.Context())
+	if !ok {
+		api.WriteInvalidCredentials(w)
+		return
+	}
+
+	if user.Role != "admin" {
+		api.WriteMessage(w, http.StatusForbidden, "error", "admin access required")
+		return
+	}
+
+	// Allowed book formats
+	allowedFormats := map[string]bool{
+		".pdf": true, ".epub": true, ".mobi": true, ".azw3": true,
+		".djvu": true, ".fb2": true, ".txt": true,
+	}
+
+	// Directories to scan
+	downloadsDirs := []string{"downloads", "downloads/uploads"}
+	
+	var restored int
+	var skipped int
+	var errors []string
+
+	for _, dir := range downloadsDirs {
+		// Check if directory exists
+		if _, err := os.Stat(dir); os.IsNotExist(err) {
+			continue
+		}
+
+		// Read directory entries
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			applog.Error("Failed to read directory:", err)
+			errors = append(errors, "Failed to read "+dir)
+			continue
+		}
+
+		for _, entry := range entries {
+			if entry.IsDir() {
+				continue
+			}
+
+			filename := entry.Name()
+			ext := utils.GetFileExtensionWithDot(filename)
+
+			// Skip non-book files
+			if !allowedFormats[ext] {
+				continue
+			}
+
+			// Get full path
+			filePath, err := utils.GetAbsolutePath(dir, filename)
+			if err != nil {
+				continue
+			}
+
+			// Check if this file is already in the database by file path
+			exists, err := br.BookRepo.BookExistsByFilePath(r.Context(), filePath)
+			if err != nil {
+				applog.Error("Failed to check book existence:", err)
+				continue
+			}
+
+			if exists {
+				skipped++
+				continue
+			}
+
+			// Get file info
+			info, err := entry.Info()
+			if err != nil {
+				continue
+			}
+
+			// Guess metadata from filename
+			title := utils.GuessBookTitle(filename)
+			format := utils.GetFileExtension(filename)
+
+			// Create book record
+			book := &model.SavedBook{
+				Hash:             utils.GenerateHash(filePath),
+				Title:            title,
+				Authors:          "",
+				Publisher:        "",
+				Language:         "",
+				Format:           format,
+				Size:             utils.FormatFileSize(info.Size()),
+				CoverURL:         "",
+				CoverData:        "",
+				FilePath:         filePath,
+				Status:           model.BookStatusReady,
+				IsUploaded:       true,
+				UploadedBy:       &user.ID,
+				OriginalFilename: filename,
+			}
+
+			if err := br.BookRepo.CreateUploadedBook(r.Context(), book); err != nil {
+				applog.Error("Failed to create book record:", err)
+				errors = append(errors, "Failed to add: "+filename)
+				continue
+			}
+
+			restored++
+		}
+	}
+
+	response := map[string]interface{}{
+		"restored": restored,
+		"skipped":  skipped,
+		"errors":   errors,
+		"message":  "Restore completed",
+	}
+
+	api.WriteJSON(w, http.StatusOK, response)
+}

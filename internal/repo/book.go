@@ -360,3 +360,12 @@ func (r *BookRepo) DeleteUploadedBook(ctx context.Context, hash string, userID i
 	return nil
 }
 
+// BookExistsByFilePath checks if a book with the given file path exists in the database
+func (r *BookRepo) BookExistsByFilePath(ctx context.Context, filePath string) (bool, error) {
+	var count int
+	err := r.db.GetContext(ctx, &count, "SELECT COUNT(*) FROM savedbooks WHERE file_path = $1", filePath)
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}

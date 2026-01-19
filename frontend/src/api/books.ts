@@ -52,11 +52,11 @@ export const booksApi = {
 
   // Admin: Update book metadata
   async updateBookMetadata(bookHash: string, title: string, authors: string, publisher: string) {
-    const response = await apiClient.post('/books/metadata', { 
-      book_hash: bookHash, 
-      title, 
-      authors, 
-      publisher 
+    const response = await apiClient.post('/books/metadata', {
+      book_hash: bookHash,
+      title,
+      authors,
+      publisher
     })
     return response.data
   },
@@ -78,6 +78,12 @@ export const booksApi = {
         'Content-Type': 'multipart/form-data'
       }
     })
+    return response.data
+  },
+
+  // Admin: Restore books from downloads directory
+  async restoreBooks() {
+    const response = await apiClient.post('/books/restore')
     return response.data
   }
 }
