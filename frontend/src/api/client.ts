@@ -77,7 +77,7 @@ apiClient.interceptors.response.use(
 
         // Only redirect to login if we're trying to access a protected route
         // Check if the original request was for a protected endpoint
-        const protectedEndpoints = ['/auth/me', '/books/favorites', '/books/downloads', '/books/upload', '/books/favorite', '/books/download', '/books/ghost-mode', '/books/delete', '/books/metadata']
+        const protectedEndpoints = ['/auth/me', '/books/favorites', '/books/downloads', '/books/upload', '/books/favorite', '/books/ghost-mode', '/books/delete', '/books/metadata']
         const isProtectedRequest = protectedEndpoints.some(endpoint => originalRequest.url?.includes(endpoint))
 
         if (isProtectedRequest && router.currentRoute.value.meta.requiresAuth) {

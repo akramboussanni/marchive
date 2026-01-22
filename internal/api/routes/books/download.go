@@ -15,41 +15,120 @@ import (
 )
 
 func (br *BookRouter) HandleRequestDownload(w http.ResponseWriter, r *http.Request) {
-	user, ok := utils.UserFromContext(r.Context())
-	if !ok {
-		api.WriteInvalidCredentials(w)
-		return
-	}
+	// Try to get user from context (OptionalAuth)
+	user, isAuthenticated := utils.UserFromContext(r.Context())
 
 	req, err := api.DecodeJSON[DownloadRequest](w, r)
 	if err != nil {
 		return
 	}
 
-	hasRequested, err := br.DownloadRequestRepo.HasUserRequestedBook(r.Context(), user.ID, req.Hash)
-	if err != nil {
-		applog.Error("Failed to check if book already requested:", err)
-		api.WriteInternalError(w)
-		return
+	var canDownload bool
+
+	if isAuthenticated {
+		// Authenticated user flow
+		// Refresh user from database to get daily_download_limit
+		freshUser, err := br.UserRepo.GetUserByID(r.Context(), user.ID)
+		if err != nil {
+			applog.Error("Failed to get user:", err)
+			api.WriteInternalError(w)
+			return
+		}
+
+		// Check if already requested
+		hasRequested, err := br.DownloadRequestRepo.HasUserRequestedBook(r.Context(), user.ID, req.Hash)
+		if err != nil {
+			applog.Error("Failed to check if book already requested:", err)
+			api.WriteInternalError(w)
+			return
+		}
+
+		if hasRequested {
+			api.WriteMessage(w, http.StatusConflict, "error", "you have already requested this book")
+			return
+		}
+
+		// Check if admin (unlimited downloads)
+		if freshUser.Role == "admin" {
+			canDownload = true
+		} else {
+			// Check daily limit and request credits
+			dailyCount, err := br.DownloadRequestRepo.GetDailyDownloadCount(r.Context(), user.ID)
+			if err != nil {
+				applog.Error("Failed to get daily download count:", err)
+				api.WriteInternalError(w)
+				return
+			}
+
+			// Check if user has exceeded their daily limit
+			if dailyCount >= freshUser.DailyDownloadLimit {
+				// Try to use request credits
+				if freshUser.RequestCredits > 0 {
+					// Deduct one request credit
+					err = br.RequestCreditsRepo.UseCredits(r.Context(), user.ID, 1)
+					if err != nil {
+						applog.Error("Failed to use request credit:", err)
+						api.WriteMessage(w, http.StatusTooManyRequests, "error", "daily download limit reached")
+						return
+					}
+					canDownload = true
+				} else {
+					api.WriteMessage(w, http.StatusTooManyRequests, "error", "daily download limit reached")
+					return
+				}
+			} else {
+				canDownload = true
+			}
+		}
+
+		// Create download request record
+		if canDownload {
+			err = br.DownloadRequestRepo.CreateDownloadRequest(r.Context(), user.ID, req.Hash, req.Title)
+			if err != nil {
+				applog.Error("Failed to create download request:", err)
+				api.WriteInternalError(w)
+				return
+			}
+		}
+
+	} else {
+		// Anonymous user flow (IP-based rate limiting)
+
+		// Check if anonymous access is enabled
+		if !br.SettingsRepo.IsAnonymousAccessEnabled(r.Context()) {
+			api.WriteMessage(w, http.StatusUnauthorized, "error", "anonymous downloads are disabled. Please login to download.")
+			return
+		}
+
+		ipAddress := r.RemoteAddr
+		// Extract IP without port if present
+		if colonIdx := len(ipAddress) - 1; colonIdx >= 0 {
+			for i := len(ipAddress) - 1; i >= 0; i-- {
+				if ipAddress[i] == ':' {
+					ipAddress = ipAddress[:i]
+					break
+				}
+			}
+		}
+
+		// Force ghost mode off for anonymous users
+		req.IsGhost = false
+
+		// Check and create anonymous download (limit of 10)
+		canDownload, err = br.AnonymousDownloadRepo.CheckAndCreateAnonymousDownload(r.Context(), ipAddress, req.Hash, req.Title)
+		if err != nil {
+			applog.Error("Failed to check anonymous download limit:", err)
+			api.WriteInternalError(w)
+			return
+		}
+
+		if !canDownload {
+			api.WriteMessage(w, http.StatusTooManyRequests, "error", "daily download limit reached")
+			return
+		}
 	}
 
-	if hasRequested {
-		api.WriteMessage(w, http.StatusConflict, "error", "you have already requested this book")
-		return
-	}
-
-	canDownload, err := br.DownloadRequestRepo.CheckAndCreateDownload(r.Context(), user.ID, req.Hash, req.Title)
-	if err != nil {
-		applog.Error("Failed to check download limit:", err)
-		api.WriteInternalError(w)
-		return
-	}
-
-	if !canDownload && user.Role != "admin" {
-		api.WriteMessage(w, http.StatusTooManyRequests, "error", "daily download limit reached")
-		return
-	}
-
+	// Check if book already exists
 	existingBook, err := br.BookRepo.GetBookByHash(r.Context(), req.Hash)
 	if err == nil {
 		// Book exists
@@ -62,8 +141,8 @@ func (br *BookRouter) HandleRequestDownload(w http.ResponseWriter, r *http.Reque
 				}
 			}
 
-			// Set requested_by if it's not set yet
-			if existingBook.RequestedBy == nil {
+			// Set requested_by if it's not set yet and user is authenticated
+			if existingBook.RequestedBy == nil && isAuthenticated {
 				requestedBy := user.ID
 				err = br.BookRepo.UpdateRequestedBy(r.Context(), req.Hash, &requestedBy)
 				if err != nil {
@@ -91,8 +170,8 @@ func (br *BookRouter) HandleRequestDownload(w http.ResponseWriter, r *http.Reque
 			}
 		}
 
-		// Set requested_by if it's not set yet
-		if existingBook.RequestedBy == nil {
+		// Set requested_by if it's not set yet and user is authenticated
+		if existingBook.RequestedBy == nil && isAuthenticated {
 			requestedBy := user.ID
 			err = br.BookRepo.UpdateRequestedBy(r.Context(), req.Hash, &requestedBy)
 			if err != nil {
@@ -101,8 +180,14 @@ func (br *BookRouter) HandleRequestDownload(w http.ResponseWriter, r *http.Reque
 		}
 	}
 
+	// Create new book if it doesn't exist
 	if err != nil {
-		requestedBy := user.ID
+		var requestedBy *int64
+		if isAuthenticated {
+			id := user.ID
+			requestedBy = &id
+		}
+
 		newBook := &model.SavedBook{
 			Hash:        req.Hash,
 			Title:       req.Title,
@@ -115,7 +200,7 @@ func (br *BookRouter) HandleRequestDownload(w http.ResponseWriter, r *http.Reque
 			CoverData:   req.CoverData,
 			Status:      model.BookStatusProcessing,
 			IsGhost:     req.IsGhost,
-			RequestedBy: &requestedBy,
+			RequestedBy: requestedBy,
 			CreatedAt:   utils.GenerateSnowflakeID(),
 			UpdatedAt:   utils.GenerateSnowflakeID(),
 		}
@@ -128,7 +213,15 @@ func (br *BookRouter) HandleRequestDownload(w http.ResponseWriter, r *http.Reque
 		}
 	}
 
-	job, err := br.DownloadJobRepo.CreateJob(r.Context(), user.ID, req.Hash)
+	// Create download job
+	var userID int64
+	if isAuthenticated {
+		userID = user.ID
+	} else {
+		userID = 0 // Anonymous user
+	}
+
+	job, err := br.DownloadJobRepo.CreateJob(r.Context(), userID, req.Hash)
 	if err != nil {
 		applog.Error("Failed to create download job:", err)
 		api.WriteInternalError(w)

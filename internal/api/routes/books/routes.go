@@ -10,22 +10,26 @@ import (
 )
 
 type BookRouter struct {
-	BookRepo            *repo.BookRepo
-	DownloadJobRepo     *repo.DownloadJobRepo
-	DownloadRequestRepo *repo.DownloadRequestRepo
-	FavoriteRepo        *repo.FavoriteRepo
-	RequestCreditsRepo  *repo.RequestCreditsRepo
-	UserRepo            *repo.UserRepo
+	BookRepo              *repo.BookRepo
+	DownloadJobRepo       *repo.DownloadJobRepo
+	DownloadRequestRepo   *repo.DownloadRequestRepo
+	AnonymousDownloadRepo *repo.AnonymousDownloadRepo
+	FavoriteRepo          *repo.FavoriteRepo
+	RequestCreditsRepo    *repo.RequestCreditsRepo
+	UserRepo              *repo.UserRepo
+	SettingsRepo          *repo.SettingsRepo
 }
 
 func NewBookRouter(repos *repo.Repos) http.Handler {
 	br := &BookRouter{
-		BookRepo:            repos.Book,
-		DownloadJobRepo:     repos.DownloadJob,
-		DownloadRequestRepo: repos.DownloadRequest,
-		FavoriteRepo:        repos.Favorite,
-		RequestCreditsRepo:  repos.RequestCredits,
-		UserRepo:            repos.User,
+		BookRepo:              repos.Book,
+		DownloadJobRepo:       repos.DownloadJob,
+		DownloadRequestRepo:   repos.DownloadRequest,
+		AnonymousDownloadRepo: repos.AnonymousDownload,
+		FavoriteRepo:          repos.Favorite,
+		RequestCreditsRepo:    repos.RequestCredits,
+		UserRepo:              repos.User,
+		SettingsRepo:          repos.Settings,
 	}
 	r := chi.NewRouter()
 
@@ -62,15 +66,19 @@ func NewBookRouter(repos *repo.Repos) http.Handler {
 
 		r.Group(func(r chi.Router) {
 			middleware.AddRatelimit(r, 15, 1*time.Minute)
-			middleware.AddAuth(r, repos.User, repos.Token)
+			middleware.AddOptionalAuth(r, repos.User, repos.Token)
 			r.Post("/download", br.HandleRequestDownload)
+		})
+
+		r.Group(func(r chi.Router) {
+			middleware.AddRatelimit(r, 15, 1*time.Minute)
+			middleware.AddAuth(r, repos.User, repos.Token)
 			r.Post("/ghost-mode", br.HandleUpdateGhostMode)
 			r.Post("/delete", br.HandleDeleteBook)
 			r.Post("/metadata", br.HandleUpdateBookMetadata)
 			r.Post("/restore", br.HandleRestoreBooks) // Admin only
 		})
 	})
-
 
 	// Upload routes with 500MB limit
 	r.Group(func(r chi.Router) {
@@ -83,5 +91,3 @@ func NewBookRouter(repos *repo.Repos) http.Handler {
 
 	return r
 }
-
-

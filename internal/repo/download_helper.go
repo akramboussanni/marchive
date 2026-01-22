@@ -18,7 +18,18 @@ func NewDownloadRequestHelper(repos *Repos) *DownloadRequestHelper {
 }
 
 func (h *DownloadRequestHelper) CheckAndCreateDownload(ctx context.Context, userID int64, md5, title string) (bool, error) {
-	canDownload, err := h.repos.DownloadRequest.CheckAndCreateDownload(ctx, userID, md5, title)
+	// Get user to access daily limit
+	user, err := h.repos.User.GetUserByID(ctx, userID)
+	if err != nil {
+		return false, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	dailyLimit := user.DailyDownloadLimit
+	if dailyLimit == 0 {
+		dailyLimit = 10 // fallback to default
+	}
+
+	canDownload, err := h.repos.DownloadRequest.CheckAndCreateDownload(ctx, userID, md5, title, dailyLimit)
 	if err != nil {
 		return false, fmt.Errorf("failed to check and create download: %w", err)
 	}
@@ -51,12 +62,23 @@ func (h *DownloadRequestHelper) CheckAndCreateDownload(ctx context.Context, user
 }
 
 func (h *DownloadRequestHelper) GetDownloadStatus(ctx context.Context, userID int64) (map[string]interface{}, error) {
-	canDownload, err := h.repos.DownloadRequest.CanDownload(ctx, userID)
+	// Get user to access daily limit
+	user, err := h.repos.User.GetUserByID(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	remaining, err := h.repos.DownloadRequest.GetRemainingDownloads(ctx, userID)
+	dailyLimit := user.DailyDownloadLimit
+	if dailyLimit == 0 {
+		dailyLimit = 10 // fallback to default
+	}
+
+	canDownload, err := h.repos.DownloadRequest.CanDownload(ctx, userID, dailyLimit)
+	if err != nil {
+		return nil, err
+	}
+
+	remaining, err := h.repos.DownloadRequest.GetRemainingDownloads(ctx, userID, dailyLimit)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +101,7 @@ func (h *DownloadRequestHelper) GetDownloadStatus(ctx context.Context, userID in
 		"can_download":        canDownload,
 		"downloads_used":      count,
 		"downloads_remaining": remaining,
-		"daily_limit":         10,
+		"daily_limit":         dailyLimit,
 		"request_credits":     requestCredits,
 		"next_reset":          nextReset.Format(time.RFC3339),
 		"time_until_reset":    timeUntilReset.String(),
@@ -102,8 +124,18 @@ func (h *DownloadRequestHelper) CanDownloadBook(ctx context.Context, userID int6
 		return false, nil
 	}
 
+	// Get user's daily download limit
+	user, err := h.repos.User.GetUserByID(ctx, userID)
+	if err != nil {
+		return false, err
+	}
+	dailyLimit := user.DailyDownloadLimit
+	if dailyLimit == 0 {
+		dailyLimit = 10 // Default limit
+	}
+
 	// Check daily download limit
-	canDownload, err := h.repos.DownloadRequest.CheckAndCreateDownload(ctx, userID, bookHash, "")
+	canDownload, err := h.repos.DownloadRequest.CheckAndCreateDownload(ctx, userID, bookHash, "", dailyLimit)
 	if err != nil {
 		return false, err
 	}

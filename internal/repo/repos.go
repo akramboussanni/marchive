@@ -8,16 +8,18 @@ import (
 )
 
 type Repos struct {
-	User            *UserRepo
-	Token           *TokenRepo
-	Lockout         *LockoutRepo
-	DownloadRequest *DownloadRequestRepo
-	Book            *BookRepo
-	DownloadJob     *DownloadJobRepo
-	SearchCache     *SearchCacheRepo
-	Favorite        *FavoriteRepo
-	RequestCredits  *RequestCreditsRepo
-	Invite          *InviteRepo
+	User              *UserRepo
+	Token             *TokenRepo
+	Lockout           *LockoutRepo
+	DownloadRequest   *DownloadRequestRepo
+	AnonymousDownload *AnonymousDownloadRepo
+	Book              *BookRepo
+	DownloadJob       *DownloadJobRepo
+	SearchCache       *SearchCacheRepo
+	Favorite          *FavoriteRepo
+	RequestCredits    *RequestCreditsRepo
+	Invite            *InviteRepo
+	Settings          *SettingsRepo
 }
 
 type Columns struct {
@@ -33,16 +35,18 @@ func NewRepos(db *sqlx.DB) *Repos {
 	userRepo := NewUserRepo(db)
 
 	return &Repos{
-		User:            userRepo,
-		Token:           NewTokenRepo(db),
-		Lockout:         NewLockoutRepo(db),
-		DownloadRequest: NewDownloadRequestRepo(db),
-		Book:            NewBookRepo(db),
-		DownloadJob:     NewDownloadJobRepo(db),
-		SearchCache:     NewSearchCacheRepo(db),
-		Favorite:        NewFavoriteRepo(db),
-		RequestCredits:  NewRequestCreditsRepo(db),
-		Invite:          NewInviteRepo(db, userRepo),
+		User:              userRepo,
+		Token:             NewTokenRepo(db),
+		Lockout:           NewLockoutRepo(db),
+		DownloadRequest:   NewDownloadRequestRepo(db),
+		AnonymousDownload: NewAnonymousDownloadRepo(db),
+		Book:              NewBookRepo(db),
+		DownloadJob:       NewDownloadJobRepo(db),
+		SearchCache:       NewSearchCacheRepo(db),
+		Favorite:          NewFavoriteRepo(db),
+		RequestCredits:    NewRequestCreditsRepo(db),
+		Invite:            NewInviteRepo(db, userRepo),
+		Settings:          NewSettingsRepo(db),
 	}
 }
 

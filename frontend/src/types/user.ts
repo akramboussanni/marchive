@@ -4,6 +4,7 @@ export interface User {
   role: string
   created_at: string
   request_credits: number
+  daily_download_limit?: number
 }
 
 export interface LoginRequest {

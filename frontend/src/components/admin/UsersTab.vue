@@ -21,6 +21,7 @@
             <th>Role</th>
             <th>Created</th>
             <th>Credits</th>
+            <th>Daily Limit</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -37,6 +38,7 @@
             </td>
             <td>{{ formatDate(user.created_at) }}</td>
             <td>{{ user.request_credits || 0 }}</td>
+            <td>{{ user.daily_download_limit || 10 }}</td>
             <td>
               <div class="action-buttons">
                 <button class="icon-button" @click="$emit('edit-user', user)" title="Edit">

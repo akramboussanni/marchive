@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -261,3 +262,41 @@ func (ar *AdminRouter) HandleInvalidateUserSessions(w http.ResponseWriter, r *ht
 
 	api.WriteMessage(w, http.StatusOK, "success", "user sessions invalidated")
 }
+
+func (ar *AdminRouter) HandleSetDailyLimit(w http.ResponseWriter, r *http.Request) {
+	req, err := api.DecodeJSON[SetDailyLimitRequest](w, r)
+	if err != nil {
+		return
+	}
+
+	// Validate daily limit
+	if req.DailyLimit < 0 {
+		api.WriteMessage(w, http.StatusBadRequest, "error", "daily limit must be non-negative")
+		return
+	}
+
+	// Check if user exists
+	user, err := ar.UserRepo.GetUserByIDSafe(r.Context(), req.UserID)
+	if err != nil {
+		api.WriteMessage(w, http.StatusNotFound, "error", "user not found")
+		return
+	}
+
+	// Update daily download limit
+	err = ar.UserRepo.UpdateDailyDownloadLimit(r.Context(), req.UserID, req.DailyLimit)
+	if err != nil {
+		applog.Error("Failed to update daily download limit:", err)
+		api.WriteInternalError(w)
+		return
+	}
+
+	response := map[string]interface{}{
+		"user_id":             req.UserID,
+		"username":            user.Username,
+		"daily_download_limit": req.DailyLimit,
+		"message":             fmt.Sprintf("Successfully set daily download limit to %d for %s", req.DailyLimit, user.Username),
+	}
+
+	api.WriteJSON(w, http.StatusOK, response)
+}
+

@@ -92,7 +92,8 @@ func (r *UserRepo) GetUsersWithStats(ctx context.Context, limit, offset int) ([]
 	query := `
 		SELECT u.id, u.username, u.user_role, u.created_at,
 		       COALESCE(dl.download_count, 0) as download_count,
-		       COALESCE(u.request_credits, 0) as request_credits
+		       COALESCE(u.request_credits, 0) as request_credits,
+		       COALESCE(u.daily_download_limit, 10) as daily_download_limit
 		FROM users u
 		LEFT JOIN (
 			SELECT user_id, COUNT(*) as download_count
@@ -112,10 +113,14 @@ func (r *UserRepo) GetUsersWithStats(ctx context.Context, limit, offset int) ([]
 	var users []model.UserWithStats
 	for rows.Next() {
 		var user model.UserWithStats
+		var dailyLimit int
 		err := rows.Scan(
 			&user.ID, &user.Username, &user.Role,
-			&user.CreatedAt, &user.DownloadCount, &user.RequestCredits,
+			&user.CreatedAt, &user.DownloadCount, &user.RequestCredits, &dailyLimit,
 		)
+		if err == nil {
+			user.DailyDownloadLimit = dailyLimit
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -133,7 +138,8 @@ func (r *UserRepo) SearchUsers(ctx context.Context, query, role string, limit, o
 		sqlQuery = `
 			SELECT u.id, u.username, u.user_role, u.created_at,
 			       COALESCE(dl.download_count, 0) as download_count,
-			       COALESCE(u.request_credits, 0) as request_credits
+			       COALESCE(u.request_credits, 0) as request_credits,
+			       COALESCE(u.daily_download_limit, 10) as daily_download_limit
 			FROM users u
 			LEFT JOIN (
 				SELECT user_id, COUNT(*) as download_count
@@ -150,7 +156,8 @@ func (r *UserRepo) SearchUsers(ctx context.Context, query, role string, limit, o
 		sqlQuery = `
 			SELECT u.id, u.username, u.user_role, u.created_at,
 			       COALESCE(dl.download_count, 0) as download_count,
-			       COALESCE(u.request_credits, 0) as request_credits
+			       COALESCE(u.request_credits, 0) as request_credits,
+			       COALESCE(u.daily_download_limit, 10) as daily_download_limit
 			FROM users u
 			LEFT JOIN (
 				SELECT user_id, COUNT(*) as download_count
@@ -167,7 +174,8 @@ func (r *UserRepo) SearchUsers(ctx context.Context, query, role string, limit, o
 		sqlQuery = `
 			SELECT u.id, u.username, u.user_role, u.created_at,
 			       COALESCE(dl.download_count, 0) as download_count,
-			       COALESCE(u.request_credits, 0) as request_credits
+			       COALESCE(u.request_credits, 0) as request_credits,
+			       COALESCE(u.daily_download_limit, 10) as daily_download_limit
 			FROM users u
 			LEFT JOIN (
 				SELECT user_id, COUNT(*) as download_count
@@ -192,10 +200,14 @@ func (r *UserRepo) SearchUsers(ctx context.Context, query, role string, limit, o
 	var users []model.UserWithStats
 	for rows.Next() {
 		var user model.UserWithStats
+		var dailyLimit int
 		err := rows.Scan(
 			&user.ID, &user.Username, &user.Role,
-			&user.CreatedAt, &user.DownloadCount, &user.RequestCredits,
+			&user.CreatedAt, &user.DownloadCount, &user.RequestCredits, &dailyLimit,
 		)
+		if err == nil {
+			user.DailyDownloadLimit = dailyLimit
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -236,5 +248,15 @@ func (r *UserRepo) UpdateUser(ctx context.Context, user *model.User) error {
 		WHERE id = $3
 	`
 	_, err := r.db.ExecContext(ctx, query, user.Username, user.Role, user.ID)
+	return err
+}
+
+func (r *UserRepo) UpdateDailyDownloadLimit(ctx context.Context, userID int64, dailyLimit int) error {
+	query := `
+		UPDATE users
+		SET daily_download_limit = $1
+		WHERE id = $2
+	`
+	_, err := r.db.ExecContext(ctx, query, dailyLimit, userID)
 	return err
 }

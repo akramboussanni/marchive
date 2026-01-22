@@ -98,8 +98,11 @@ func (br *BookRouter) HandleSearch(w http.ResponseWriter, r *http.Request) {
 		totalDownloaded = dbTotal
 	}
 
-	// Search missing books (from Anna) if needed - only for authenticated users
-	if hasUser && (req.SearchType == "all" || req.SearchType == "missing") {
+	// Search missing books (from Anna) if needed
+	// Allow for authenticated users OR anonymous users when anonymous access is enabled
+	anonymousAccessEnabled := br.SettingsRepo.IsAnonymousAccessEnabled(r.Context())
+	canSearchAnna := hasUser || anonymousAccessEnabled
+	if canSearchAnna && (req.SearchType == "all" || req.SearchType == "missing") {
 		annaBooks, err := anna.FindBook(req.Query)
 		if err != nil {
 			applog.Error("Failed to search Anna books:", err)

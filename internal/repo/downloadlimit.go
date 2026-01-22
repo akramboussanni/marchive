@@ -56,22 +56,22 @@ func (r *DownloadRequestRepo) GetDailyDownloadCount(ctx context.Context, userID 
 	return count, err
 }
 
-func (r *DownloadRequestRepo) CanDownload(ctx context.Context, userID int64) (bool, error) {
+func (r *DownloadRequestRepo) CanDownload(ctx context.Context, userID int64, dailyLimit int) (bool, error) {
 	count, err := r.GetDailyDownloadCount(ctx, userID)
 	if err != nil {
 		return false, err
 	}
 
-	return count < 10, nil
+	return count < dailyLimit, nil
 }
 
-func (r *DownloadRequestRepo) GetRemainingDownloads(ctx context.Context, userID int64) (int, error) {
+func (r *DownloadRequestRepo) GetRemainingDownloads(ctx context.Context, userID int64, dailyLimit int) (int, error) {
 	count, err := r.GetDailyDownloadCount(ctx, userID)
 	if err != nil {
 		return 0, err
 	}
 
-	remaining := 10 - count
+	remaining := dailyLimit - count
 	if remaining < 0 {
 		remaining = 0
 	}
@@ -89,7 +89,7 @@ func (r *DownloadRequestRepo) HasUserRequestedBook(ctx context.Context, userID i
 	return count > 0, nil
 }
 
-func (r *DownloadRequestRepo) CheckAndCreateDownload(ctx context.Context, userID int64, md5, title string) (bool, error) {
+func (r *DownloadRequestRepo) CheckAndCreateDownload(ctx context.Context, userID int64, md5, title string, dailyLimit int) (bool, error) {
 	// Check if user has already requested this book
 	hasRequested, err := r.HasUserRequestedBook(ctx, userID, md5)
 	if err != nil {
@@ -100,7 +100,7 @@ func (r *DownloadRequestRepo) CheckAndCreateDownload(ctx context.Context, userID
 		return false, nil // Already requested, don't allow duplicate
 	}
 
-	canDownload, err := r.CanDownload(ctx, userID)
+	canDownload, err := r.CanDownload(ctx, userID, dailyLimit)
 	if err != nil {
 		return false, fmt.Errorf("failed to check download limit: %w", err)
 	}

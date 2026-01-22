@@ -65,3 +65,9 @@ type RequestCreditsResponse struct {
 	RequestCredits int    `json:"request_credits" example:"5"`
 	Message        string `json:"message" example:"Credits updated successfully"`
 }
+
+type SetDailyLimitRequest struct {
+	UserID     int64 `json:"user_id" binding:"required" example:"123456789"`
+	DailyLimit int   `json:"daily_limit" binding:"required" example:"10"`
+}
+

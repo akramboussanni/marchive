@@ -132,9 +132,10 @@
       <div v-if="showGhostModeDialog" class="modal-overlay" @click="cancelAddToLibrary">
         <div class="ghost-dialog" @click.stop>
           <h3>Add to mArchive</h3>
-          <p class="dialog-description">Choose how to add this book to your library:</p>
+          <p class="dialog-description">{{ authStore.isAuthenticated ? 'Choose how to add this book to your library:' : 'Add this book to your library' }}</p>
           
-          <div class="ghost-mode-option">
+          <!-- Ghost Mode Option - only show for authenticated users -->
+          <div v-if="authStore.isAuthenticated" class="ghost-mode-option">
             <label class="checkbox-label">
               <input 
                 type="checkbox" 
@@ -154,6 +155,17 @@
               Book will only be visible to you and admins. Others won't see it in the public library.
             </p>
           </div>
+
+          <!-- Anonymous user message -->
+          <div v-if="!authStore.isAuthenticated" class="anonymous-info">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            <p>This book will be added to the public library and visible to everyone. <strong>Login to enable Ghost Mode</strong> for private downloads.</p>
+          </div>
+
 
           <div v-if="addBookError" class="error-message">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -688,6 +700,37 @@ watch(searchType, () => {
   line-height: 1.5;
   padding-left: 2rem;
 }
+
+.anonymous-info {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 1.25rem;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+}
+
+.anonymous-info svg {
+  width: 20px;
+  height: 20px;
+  color: #3b82f6;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.anonymous-info p {
+  color: #94a3b8;
+  font-size: 0.875rem;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.anonymous-info strong {
+  color: #3b82f6;
+}
+
 
 .error-message {
   display: flex;

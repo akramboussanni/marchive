@@ -16,6 +16,7 @@ type AdminRouter struct {
 	BookRepo            *repo.BookRepo
 	DownloadRequestRepo *repo.DownloadRequestRepo
 	RequestCreditsRepo  *repo.RequestCreditsRepo
+	SettingsRepo        *repo.SettingsRepo
 	UserService         *services.UserService
 }
 
@@ -26,9 +27,13 @@ func NewAdminRouter(repos *repo.Repos, userService *services.UserService) http.H
 		BookRepo:            repos.Book,
 		DownloadRequestRepo: repos.DownloadRequest,
 		RequestCreditsRepo:  repos.RequestCredits,
+		SettingsRepo:        repos.Settings,
 		UserService:         userService,
 	}
 	r := chi.NewRouter()
+
+	// Create settings handler
+	settingsHandler := NewSettingsHandler(repos.Settings)
 
 	r.Use(middleware.MaxBytesMiddleware(1 << 20))
 
@@ -49,6 +54,13 @@ func NewAdminRouter(repos *repo.Repos, userService *services.UserService) http.H
 
 		// Request credits management
 		r.Post("/users/credits/grant", ar.HandleGrantRequestCredits)
+
+		// Daily download limit management
+		r.Post("/users/daily-limit", ar.HandleSetDailyLimit)
+
+		// Settings management
+		r.Get("/settings", settingsHandler.HandleGetSettings)
+		r.Post("/settings", settingsHandler.HandleUpdateSetting)
 	})
 
 	return r
